@@ -3,3 +3,8 @@ no-state-income-tax,Places with no state income tax,"Keep the pension whole. Eve
 explicit-protections,Places with explicit state protections,"Every place here is in a state whose housing and public-accommodation laws name sexual orientation and gender identity explicitly.",housing_law==explicit
 under-400k,Places under $400K,"The median home costs less than $400,000 in every place on this list. Sunshine on a budget.",price<400000
 walkable-towns,Walkable towns,"Places where the errands, the coffee, and the friends are on foot.",walk~walkable
+beach-coastal,Beach & coastal towns,"Humidity, hurricane season, and a beach town's pace of life — every place here sits on the water.",lifestyle~beach-coastal
+mountains-seasons,Mountains & four seasons,"Real winters, elevation or forest, and a slower pace built around the outdoors instead of nightlife.",lifestyle~mountains-seasons
+desert-sunbelt,Desert & big sky,"Dry heat, wide streets, and sunbelt or resort-town living — snowbird energy, year-round.",lifestyle~desert-sunbelt
+small-town,"Small town, everyone knows you","Population small enough that the whole town functions like one social circle.",lifestyle~small-town
+big-city,Big-city amenities,"A major airport, a full hospital system, and more than one option for everything — real-metro infrastructure.",lifestyle~big-city

@@ -18,8 +18,11 @@ check("data: every city state_code resolves", all(c["state_code"] in states for 
 check("data: tiers valid", all(c["tier"] in {"1","2","3"} for c in cities))
 check("data: local_ndo enum valid", all(c["local_ndo"] in {"yes","partial","no"} for c in cities))
 check("data: housing_law enum valid", all(s["housing_law"] in {"explicit","interpreted","none","VERIFY"} for s in states.values()))
-req = ["slug","city_label","one_liner","median_price_usd","price_asof","airport","last_reviewed","status"]
+req = ["slug","city_label","one_liner","median_price_usd","price_asof","airport","last_reviewed","status","lifestyle_tags"]
 check("data: no empty required city fields", all(c[k].strip() for c in cities for k in req))
+LIFESTYLE_VOCAB = {"beach-coastal","mountains-seasons","desert-sunbelt","small-town","big-city"}
+check("data: lifestyle_tags use known vocabulary only", all(
+    set(t.strip() for t in c["lifestyle_tags"].split(";") if t.strip()) <= LIFESTYLE_VOCAB for c in cities))
 check("data: every legal row has src+asof", all(s["law_src"].startswith("http") and s["law_asof"] for s in states.values()))
 check("data: every published city has sourced price", all(c["price_src"].startswith("http") and "VERIFY" not in c["price_asof"] for c in cities if c["status"]=="published"))
 check("data: prices are integers", all(c["median_price_usd"].isdigit() for c in cities))
@@ -57,7 +60,7 @@ for pth in expected:
     base = os.path.dirname(os.path.join(DIST, pth))
     for href in p.links:
         if href.startswith(("http","mailto","tel:","#")): continue
-        href = href.split("?")[0]
+        href = href.split("?")[0].split("#")[0]
         if not href: continue
         target = os.path.normpath(os.path.join(base, href))
         if not os.path.exists(target): bad_links.append(f"{pth} → {href}")
@@ -155,6 +158,10 @@ check("arch: agent preselect wired into intake", 'name="preferred_agent"' in cn 
 check("ga: region filter tracked as filter_region event", "gtag('event', 'filter_region'" in home)
 check("ga: table sort tracked as sort_table event", "gtag('event', 'sort_table'" in home)
 check("ga: agent card CTA tracked with agent_link_click", 'data-ga="agent_link_click"' in ash)
+check("ga: all 6 lifestyle explore cards tracked (lifestyle_click)", home.count('data-ga="lifestyle_click"') == 6)
+check("ga: all 3 quick-filter pills tracked (quicklist_click)", home.count('data-ga="quicklist_click"') == 3)
+check("ga: homepage CTA banners tracked with distinct labels", all(
+    f'data-ga-label="{lbl}"' in home for lbl in ("lifestyle_grid","mid_banner","final_banner")))
 # ---------- 6. Honesty guarantees ----------
 draft_ok = all(("Status: DRAFT" in open(os.path.join(DIST,"city",c["slug"]+".html")).read()) == (c["status"]=="draft") for c in cities)
 check("integrity: draft stamp matches data status on every city page", draft_ok)

@@ -50,7 +50,16 @@ agents_by_market = {}
 for a in agents:
     for m in a["market_slugs"].split(";"):
         agents_by_market.setdefault(m.strip(), []).append(a)
-TIERS = {"1": "Tier 1 · Highest referral potential", "2": "Tier 2 · Strong markets", "3": "Tier 3 · Niche & destination towns"}
+TIERS = {"1": "Tier 1 · Flagship markets", "2": "Tier 2 · Strong markets", "3": "Tier 3 · Niche & destination towns"}
+LIFESTYLE_LANES = [
+    ("walkable-towns", "Walkable & social", "Errands, coffee, and your people, all on foot."),
+    ("beach-coastal", "Beach & coastal", "Humidity, hurricane season, and a beach you can walk to."),
+    ("mountains-seasons", "Mountains & four seasons", "Real winters, real elevation, quiet built in."),
+    ("desert-sunbelt", "Desert & big sky", "Dry heat, wide streets, snowbird energy year-round."),
+    ("small-town", "Small town, everyone knows you", "Small enough that the whole town is basically your friend group."),
+    ("big-city", "Big-city amenities", "Major airport, full hospital system, more than one option for everything."),
+]
+QUICK_FILTERS = ["no-state-income-tax", "explicit-protections", "under-400k"]
 LAW = {"explicit": ("Explicit state law", "ok"), "interpreted": ("Interpreted by state commission", "mid"),
        "none": ("No statewide law", "no"), "VERIFY": ("Needs verification", "mid")}
 
@@ -78,6 +87,9 @@ nav a:hover{border-bottom-color:var(--sun)}
 .chip{border:2px solid var(--ink);background:var(--cream);border-radius:999px;padding:6px 15px;font:700 .85rem "Karla";cursor:pointer;box-shadow:2px 2px 0 rgba(58,42,30,.18)}
 .chip.on{background:var(--pool);color:#fff;border-color:var(--ink)}
 .chip:active{transform:translate(1px,1px);box-shadow:none}
+.pill{display:inline-block;text-decoration:none;border:2px solid var(--ink);background:var(--cream);color:var(--ink);border-radius:999px;padding:6px 15px;font:700 .85rem "Karla";box-shadow:2px 2px 0 rgba(58,42,30,.18)}
+.pill:hover{background:var(--poolt)}
+.pill:active{transform:translate(1px,1px);box-shadow:none}
 .tblwrap{overflow-x:auto;border:2px solid var(--ink);border-radius:12px;background:var(--cream);margin:14px 0 44px;box-shadow:5px 5px 0 rgba(58,42,30,.14)}
 table{border-collapse:collapse;width:100%;font-size:.9rem;font-variant-numeric:tabular-nums}
 th,td{padding:11px 13px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
@@ -147,7 +159,7 @@ def page(title, body, depth=0, desc=""):
 {GA_SNIPPET}
 <link rel="stylesheet" href="{p}style.css"></head><body>
 <header class="site"><div class="wrap"><a class="brand" href="{p}index.html">GayRetirees.com</a>
-<nav><a href="{p}index.html">Cities</a><a href="{p}best/no-state-income-tax.html">Lists</a><a href="{p}states.html">State laws</a><a href="{p}methodology.html">Methodology</a><a href="{p}connect.html">Talk to us</a></nav><a class="cta" style="margin:0;padding:8px 18px;font-size:.9rem" href="tel:+18284120678" data-ga="phone_click" data-ga-label="header">📞 Call Dylan</a></div></header>
+<nav><a href="{p}index.html">Cities</a><a href="{p}index.html#browse">Browse by lifestyle</a><a href="{p}states.html">State laws</a><a href="{p}methodology.html">Methodology</a><a href="{p}connect.html">Talk to us</a></nav><a class="cta" style="margin:0;padding:8px 18px;font-size:.9rem" href="tel:+18284120678" data-ga="phone_click" data-ga-label="header">📞 Call Dylan</a></div></header>
 {body}
 <div class="nl"><div class="wrap"><h2>Get the quarterly postcard</h2>
 <p style="font-size:.9rem;color:var(--mut);margin-bottom:10px">When the laws, prices, or rankings move, we send one honest email. That\u2019s it — no spam, ever.</p>
@@ -179,6 +191,20 @@ def lawbadge(code):
     label, cls = LAW.get(code, (code, "mid"))
     return f'<span class="b {cls}">{e(label)}</span>'
 
+def matches(c, rule):
+    s = states[c["state_code"]]
+    if rule == "income_tax==none": return s["income_tax"] == "none"
+    if rule == "housing_law==explicit": return s["housing_law"] == "explicit"
+    if rule == "price<400000": return int(c["median_price_usd"]) < 400000
+    if rule == "walk~walkable": return "walkable" in c["walkability"]
+    if rule.startswith("lifestyle~"):
+        tag = rule.split("~", 1)[1]
+        return tag in [t.strip() for t in c["lifestyle_tags"].split(";") if t.strip()]
+    return False
+
+collection_by_slug = {col["slug"]: col for col in collections}
+collection_counts = {col["slug"]: sum(1 for c in cities if matches(c, col["rule"])) for col in collections}
+
 # ---------- index ----------
 rows = ""
 for c in sorted(cities, key=lambda x: (x["tier"], x["city_label"])):
@@ -208,18 +234,41 @@ for t in ["1", "2", "3"]:
         cards += f"""<a class="card" href="city/{c['slug']}.html"><div class="pstamp"><small>median</small>{price_k}</div><h3>{e(c['city_label'])}</h3><p>{e(c['one_liner'])}</p><div class="m">{lawbadge(states[c['state_code']]['housing_law'])}</div></a>"""
     tiercards += f'<section class="tier wrap"><h2>{TIERS[t]}</h2><div class="cards">{cards}</div></section>'
 
+lifestyle_cards = ""
+for slug, label, desc in LIFESTYLE_LANES:
+    n = collection_counts.get(slug, 0)
+    lifestyle_cards += f"""<a class="card" href="best/{slug}.html" data-ga="lifestyle_click" data-ga-label="{e(slug)}"><div class="pstamp"><small>places</small>{n}</div><h3>{e(label)}</h3><p>{e(desc)}</p></a>"""
+
+quick_pills = ""
+for slug in QUICK_FILTERS:
+    col = collection_by_slug[slug]
+    n = collection_counts.get(slug, 0)
+    quick_pills += f"""<a class="pill" href="best/{slug}.html" data-ga="quicklist_click" data-ga-label="{e(slug)}">{e(col['title'])} · {n}</a>"""
+
 index_body = f"""<div class="hero"><div class="arc" aria-hidden="true"></div><div class="wrap">
 <div class="kicker">For the best chapter yet</div>
-<h1>Pick your place in the sun.</h1>
-<p>Twenty-three places LGBTQ+ people actually retire, laid out side by side like postcards on the fridge — the laws, the prices, the taxes, the healthcare, the sunshine. All of it sourced and dated, none of it guesswork. You do the dreaming and the choosing. We handle the landing.</p>
+<h1>Where do you actually want to grow old?</h1>
+<p>Twenty-three places LGBTQ+ people actually retire — not ranked, not rated, just laid out by the life you're picturing: walkable and social, beach-town slow, mountain quiet, big-city amenities. Start with a feeling below, or skip straight to the full comparison table. Every fact is sourced and dated either way.</p>
 <span class="stamp">Data status: DRAFT · last reviewed Aug 2026 · legal data via Movement Advancement Project</span>
 </div></div>
-<div class="wrap"><div class="controls">{chips}</div>
+<section class="tier wrap" id="browse"><div class="kicker">Start here</div><h2>What's the vibe you're picturing?</h2>
+<div class="cards">{lifestyle_cards}</div>
+<div style="padding-top:24px"><a class="cta" href="connect.html" data-ga="cta_click" data-ga-label="lifestyle_grid">Don't see it? Tell us what matters most →</a></div>
+</section>
+<section class="tier wrap"><div class="kicker">Or filter by what's non-negotiable</div><h2>Quick filters</h2>
+<div class="controls">{quick_pills}</div>
+</section>
+<div class="wrap" style="padding:14px 0 36px;text-align:center;border-top:2px dashed var(--line)">
+<p style="font-size:1.05rem;font-weight:700;margin-bottom:12px">Have your own must-haves? Skip the browsing.</p>
+<a class="cta" href="connect.html" data-ga="cta_click" data-ga-label="mid_banner">Talk to a real person →</a>
+</div>
+{tiercards}
+<section class="tier wrap"><div class="kicker">The full picture</div><h2>Compare every place side-by-side</h2>
+<div class="controls">{chips}</div>
 <div class="tblwrap"><table id="mx"><thead><tr>
 <th>Place</th><th>Tier</th><th>Median price</th><th>State housing law</th><th>Local ordinance</th><th>Income tax</th><th>Climate</th><th>Region</th>
-</tr></thead><tbody>{rows}</tbody></table></div></div>
-{tiercards}
-<div class="wrap"><a class="cta" href="connect.html">Tell us what you're looking for →</a></div>
+</tr></thead><tbody>{rows}</tbody></table></div></section>
+<div class="wrap"><a class="cta" href="connect.html" data-ga="cta_click" data-ga-label="final_banner">Tell us what you're looking for →</a></div>
 <script>
 const tb=document.querySelector('#mx tbody');
 document.querySelectorAll('.chip').forEach(ch=>ch.onclick=()=>{{
@@ -355,7 +404,7 @@ os.makedirs(DIST, exist_ok=True)
 with open(os.path.join(DIST, "style.css"), "w") as f: f.write(CSS)
 with open(os.path.join(DIST, "analytics.js"), "w") as f: f.write(ANALYTICS_JS)
 with open(os.path.join(DIST, "index.html"), "w") as f:
-    f.write(page("GayRetirees.com — 23 places, one honest table", index_body, desc="Side-by-side data on where LGBTQ+ people retire: laws, taxes, prices, healthcare, climate."))
+    f.write(page("GayRetirees.com — 23 places, browse by lifestyle", index_body, desc="Where LGBTQ+ people actually retire, browsable by lifestyle or laid out side by side: laws, taxes, prices, healthcare, climate."))
 with open(os.path.join(DIST, "states.html"), "w") as f: f.write(page("State laws & taxes — GayRetirees.com", states_body))
 with open(os.path.join(DIST, "methodology.html"), "w") as f: f.write(page("Methodology — GayRetirees.com", meth_body))
 with open(os.path.join(DIST, "connect.html"), "w") as f: f.write(page("Talk to us — GayRetirees.com", conn_body))
@@ -417,13 +466,6 @@ for r in routes:
 
 # ---------- collection pages (computed from data — never thin) ----------
 os.makedirs(os.path.join(DIST, "best"), exist_ok=True)
-def matches(c, rule):
-    s = states[c["state_code"]]
-    if rule == "income_tax==none": return s["income_tax"] == "none"
-    if rule == "housing_law==explicit": return s["housing_law"] == "explicit"
-    if rule == "price<400000": return int(c["median_price_usd"]) < 400000
-    if rule == "walk~walkable": return "walkable" in c["walkability"]
-    return False
 for col in collections:
     hits = [c for c in cities if matches(c, col["rule"])]
     cards = ""
