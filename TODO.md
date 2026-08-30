@@ -52,10 +52,12 @@ In order:
       CLAUDE.md) — the "Straight talk" section only renders once Dylan
       actually writes one; the "Full write-up coming" note now only shows
       on draft pages, not published ones.
-- [ ] Netlify: connect repo, build command `python3 build.py`, publish `dist/`,
-      set `SITE_URL=https://gayretirees.com` env var, point domain
-- [ ] Netlify Forms → Notifications → route relocation-intake + newsletter
-      to Dylan's email
+- [x] Netlify: connect repo, build command `python3 build.py`, publish `dist/`,
+      set `SITE_URL=https://gayretirees.com` env var — done 2026-08-30.
+      Domain was already pointed at Netlify from a prior manual deploy.
+- [x] Netlify Forms → Notifications → route relocation-intake + newsletter
+      to dylanjlennon@gmail.com — done 2026-08-30. Switch to
+      dylan@gayretirees.com once that mailbox is live.
 - [ ] Stripe Payment Links for $29/$79/$149/$249 tiers + $19 founding rate
 - [x] Analytics plumbing done: GA4 snippet on every page (build.py `GA_SNIPPET`),
       plus a shared `analytics.js` that fires GA4 events for every form

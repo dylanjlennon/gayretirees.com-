@@ -7,10 +7,15 @@ own (Google, Netlify, Stripe, a bank). **[CLAUDE+BROWSER]** I can drive it
 in Chrome via browser automation, but only while you're logged in — I'll
 ask you to open the tab and authenticate, then I take over the clicking.
 
-Current state as of 2026-08-30: 23 city pages + 23 state rows, all
-`status=draft` (DRAFT stamp renders sitewide). One real agent (Dylan,
-Asheville). No git remote, no Netlify site, no live GA4 property, no
-Stripe. `build.py` runs clean, `tests.py` is green (39/39).
+Current state as of 2026-08-30: **the site is live at gayretirees.com**,
+deploying automatically from `github.com/dylanjlennon/gayretirees.com-`
+main branch (Netlify build `python3 build.py` → `dist`, `SITE_URL` env var
+set). Homepage rearchitected around lifestyle-first browsing. Both forms
+(`relocation-intake`, `newsletter`) are active and notify
+dylanjlennon@gmail.com on submission. 14 of 23 cities `status=published`,
+9 still `draft` pending a manual price pull. One real agent (Dylan,
+Asheville). No live GA4 property yet, no Stripe. `build.py` runs clean,
+`tests.py` is green (52/52).
 
 ---
 
@@ -35,21 +40,27 @@ Stripe. `build.py` runs clean, `tests.py` is green (39/39).
 
 ## Phase 2 — Get it live (blocks anyone seeing the site)
 
-- [ ] **[DYLAN]** Create a GitHub repo, give me the remote URL (or push
-      access) — right now this repo has no remote at all, it's local-only.
-- [ ] **[DYLAN]** or **[CLAUDE+BROWSER]** Netlify: connect the repo, build
-      command `python3 build.py`, publish dir `dist`, set env var
-      `SITE_URL=https://gayretirees.com`. I can drive this in Chrome if
-      you'd rather watch than click.
-- [ ] **[DYLAN]** Point the `gayretirees.com` domain's DNS at Netlify
-      (registrar login required — that's you).
+- [x] **[DYLAN]** Created GitHub repo `dylanjlennon/gayretirees.com-`
+      (2026-08-30); **[CLAUDE]** pushed `main`.
+- [x] **[CLAUDE+BROWSER]** Netlify project `gayretirees` linked to the repo,
+      build command `python3 build.py`, publish dir `dist`, `SITE_URL` env
+      var set. Auto-publish on push to `main` is on.
+- [x] `gayretirees.com` DNS already pointed at Netlify with a live Let's
+      Encrypt cert (was done before this session — found already configured,
+      site had a prior manual CLI deploy under the same Netlify project).
 
 ## Phase 3 — Get leads flowing (blocks the intake form doing anything)
 
-- [ ] **[DYLAN]** Netlify Forms → Notifications → route `relocation-intake`
-      and `newsletter` submissions to a real inbox.
-- [ ] **[CLAUDE]** Sanity-check the notification routing once it's live
-      (submit a test lead, confirm it lands).
+- [x] **[CLAUDE+BROWSER]** Netlify Forms → Notifications → both
+      `relocation-intake` and `newsletter` route to dylanjlennon@gmail.com
+      on any submission. Form detection enabled + redeployed; dashboard
+      confirms "2 forms collecting data."
+- [ ] **[DYLAN]** or **[CLAUDE+BROWSER]** Sanity-check by actually submitting
+      a test lead through the live site and confirming the email lands —
+      not done yet, since submitting a form is a discrete action worth your
+      go-ahead rather than assuming.
+- [ ] **[DYLAN]** Once `dylan@gayretirees.com` is a live mailbox (see Phase 1),
+      switch the notification email from the Gmail fallback to that address.
 
 ## Phase 4 — Get paid (blocks agent tiers being real products)
 
@@ -81,7 +92,6 @@ Stripe. `build.py` runs clean, `tests.py` is green (39/39).
 ---
 
 **Immediate ask:** two answers to unblock Phase 1 (email status, license
-number), and a scope decision on the verification pass (all 23
-states/cities, or a smaller flagship set first — I'd suggest flagship
-first so we can publish something real sooner rather than boiling the
-ocean).
+number); a decision on the remaining 9 unpriced cities; and whether to
+submit a test lead through the live form to confirm the notification
+email actually lands.
