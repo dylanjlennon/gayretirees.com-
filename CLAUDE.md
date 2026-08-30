@@ -14,8 +14,9 @@ These rules are permanent. Follow them on every change, no exceptions.
 
 ## Claims and rankings
 - Rank/numeric claims (e.g. "#1 origin") are allowed **only** on pages whose
-  data is third-party cited — currently the Atlanta/Miami/DC routes, per Redfin.
-- All other copy stays qualitative. Do not add superlatives when polishing copy.
+  data is third-party cited, with the source and as-of date recorded.
+- No page currently qualifies — all copy stays qualitative. Do not add
+  superlatives when polishing copy.
 
 ## Monetization boundary
 - Every paid agent link keeps `rel="sponsored"` and its on-card disclosure.

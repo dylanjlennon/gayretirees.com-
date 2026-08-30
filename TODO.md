@@ -6,9 +6,15 @@ In order:
       + agents.csv) with real OpenPhone/GVoice number
 - [ ] Replace REPLACE-tagged emails and license in agents.csv (Dylan's row)
 - [ ] Delete the two EXAMPLE agent rows (jane-sample, mark-sample)
-- [ ] DECISION (confirm with Dylan first): remove the 20 `*-to-asheville` rows
-      from routes.csv — they're slated to live on GayAsheville.com instead;
-      keep the 3 original routes
+- [x] DECISION (confirmed): removed the 20 `*-to-asheville` route rows from
+      routes.csv — consolidated to the single existing Asheville city page
+      instead, to avoid duplicating GayAsheville.com content across sites.
+      Kept the 3 original routes. The Redfin #1/#2/#3-origin ranking claim
+      that lived on the Atlanta/Miami/DC routes was dropped (no source page
+      left to carry it); CLAUDE.md's ranking-claims rule updated accordingly.
+- [ ] Give the Asheville city page (data/cities.csv) a copy pass so its
+      one_liner/description reads as genuinely novel vs. GayAsheville.com,
+      not just the leftover from the old route pages
 - [ ] Tier 1 verification pass: states.csv legal fields vs lgbtmap.org,
       cities.csv prices vs Redfin/Zillow; bump as-of dates; flip verified
       flagship cities to status=published
