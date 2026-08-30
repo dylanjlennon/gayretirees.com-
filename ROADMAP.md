@@ -23,15 +23,15 @@ Stripe. `build.py` runs clean, `tests.py` is green (39/39).
       should the site show a different working email for now?
 - [ ] **[DYLAN]** Dylan's NC real estate license number (`agents.csv`,
       currently `NC-REPLACE`) — this is a legal identifier, I won't guess it.
-- [ ] **[CLAUDE]** Tier-1 verification pass: for each of the 23 states, check
-      `housing_law` / `pa_law` / `ltc_protections` / `income_tax` /
-      `ss_taxed` / `estate_inheritance_tax` against a citable source
-      (lgbtmap.org for LGBTQ+ legal fields, state DOR pages for tax), record
-      `law_src` + `law_asof`. For each of the 23 cities, check
-      `median_price_usd` against Redfin/Zillow, record `price_asof`. Flip
-      `status: draft → published` only for rows that come out fully sourced.
-      This is the single biggest blocker to the site saying anything with
-      confidence — starting once you confirm scope below.
+- [x] Tier-1 verification pass — done 2026-08-30 for all 23 states + 23
+      cities. 14 cities now `status=published` with a real sourced price
+      (`price_src`). 9 cities (wilton-manors, st-pete, sarasota, key-west,
+      savannah, rehoboth, new-hope, provincetown, ogunquit) stay `draft` —
+      Redfin/Zillow blocked automated fetches and search-snippet prices for
+      those specific markets were too inconsistent to trust. **[DYLAN]** or
+      **[CLAUDE+BROWSER]**: needs a manual price pull for those 9 (5 min
+      each on Redfin/Zillow directly), or I can do it via Chrome automation
+      once the extension is connected.
 
 ## Phase 2 — Get it live (blocks anyone seeing the site)
 
