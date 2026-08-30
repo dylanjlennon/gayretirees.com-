@@ -235,8 +235,9 @@ os.makedirs(os.path.join(DIST, "city"), exist_ok=True)
 for c in cities:
     s = states[c["state_code"]]
     price = f"${int(c['median_price_usd']):,}" if c["median_price_usd"] else "—"
+    price_badge = "" if c["status"] == "published" else " <span class='b mid'>est.</span>"
     facts = [
-        ("Median home price", f"{price} <span class='b mid'>est.</span>"),
+        ("Median home price", f"{price}{price_badge}"),
         ("State housing law", lawbadge(s["housing_law"])),
         ("Public accommodations", lawbadge(s["pa_law"])),
         ("Local ordinance", e(c["local_ndo"])),
@@ -265,12 +266,21 @@ for c in cities:
 <p>Anchor institution: {e(c['community_org'])}. {e(c['senior_lgbtq_asset'])}. HIV/LGBTQ-competent care: {e(c['hiv_care'])}.</p>
 <h2>Living here</h2>
 <p>Climate: {e(c['climate'])}, roughly {e(c['summer_high_f'])}° summer highs and {e(c['winter_low_f'])}° winter lows. Walkability: {e(c['walkability'])}. Hazard awareness: {e(c['hazard_flags'])}. Air access: {e(c['airport'])}.</p>
-<h2>The straight talk</h2>
-<p><em>Honest downsides section — written by a human, per city, before publish. No place is perfect; saying so is why anyone trusts the rest of this page.</em></p>
+{{straight_talk}}
 {{agent_block}}
-<div class="note"><strong>Full write-up coming.</strong> This page is generated from our research table and is marked {e(c['status'])} until every fact clears a verification pass.</div>
+{{draft_note}}
 <a class="cta" href="../connect.html">Considering {e(c['city_label'].split(',')[0].split(' &')[0])}? Talk to us →</a>
 </div></div>"""
+    if c.get("dylan_note"):
+        straight_talk = f'<h2>The straight talk</h2><p>{e(c["dylan_note"])}</p>'
+    else:
+        straight_talk = ""
+    body = body.replace("{straight_talk}", straight_talk)
+    if c["status"] != "published":
+        draft_note = f'<div class="note"><strong>Full write-up coming.</strong> This page is generated from our research table and is marked {e(c["status"])} until every fact clears a verification pass.</div>'
+    else:
+        draft_note = ""
+    body = body.replace("{draft_note}", draft_note)
     mkts = agents_by_market.get(c["slug"], [])
     live = [a for a in mkts if a["status"] in ("active","example")]
     if live:

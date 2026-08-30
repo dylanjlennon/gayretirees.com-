@@ -21,6 +21,7 @@ check("data: housing_law enum valid", all(s["housing_law"] in {"explicit","inter
 req = ["slug","city_label","one_liner","median_price_usd","price_asof","airport","last_reviewed","status"]
 check("data: no empty required city fields", all(c[k].strip() for c in cities for k in req))
 check("data: every legal row has src+asof", all(s["law_src"].startswith("http") and s["law_asof"] for s in states.values()))
+check("data: every published city has sourced price", all(c["price_src"].startswith("http") and "VERIFY" not in c["price_asof"] for c in cities if c["status"]=="published"))
 check("data: prices are integers", all(c["median_price_usd"].isdigit() for c in cities))
 
 # ---------- 2. Build outputs ----------

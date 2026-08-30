@@ -21,9 +21,37 @@ In order:
       one_liner reads as genuinely novel vs. GayAsheville.com — repositioned
       around the retirement angle (retiree-paced WNC life) rather than the
       general relocation pitch GayAsheville.com already owns.
-- [ ] Tier 1 verification pass: states.csv legal fields vs lgbtmap.org,
-      cities.csv prices vs Redfin/Zillow; bump as-of dates; flip verified
-      flagship cities to status=published
+- [x] Tier 1 verification pass (2026-08-30): all 23 states' legal/tax fields
+      checked against mapresearch.org (lgbtmap.org rebranded), Tax Foundation,
+      state DOR/OTR pages, and AARP/SSA guidance — 6 parallel research passes,
+      sources + as-of dates recorded in states.csv. Found and corrected 4
+      stale fields: NC income tax 4.5%→3.99%, CO flat-low→flat-mid (4.40%),
+      GA flat-low→flat-mid (4.99%), MI flat-low→flat-mid (4.25%). Resolved
+      6 of 9 previously-VERIFY ltc_protections fields (NV/CO/IL/PA → no,
+      OR/MA/NY/NJ/DC → yes); DE/ME/MI/NM genuinely have no citable source,
+      correctly left VERIFY rather than guessed.
+      Cities: 14 of 23 got a real sourced median price (Redfin/Zillow) and
+      flipped to status=published — asheville, raleigh-durham,
+      eureka-springs, phoenix, tucson, santa-fe, albuquerque, austin,
+      palm-springs, guerneville, las-vegas, portland, denver, saugatuck.
+      9 came back UNVERIFIABLE — Redfin/Zillow blocked automated fetches
+      (403) and search-snippet figures for these specific small/volatile
+      markets varied too widely to trust (e.g. Key West ranged
+      $792K–$1.34M across snapshots): wilton-manors, st-pete, sarasota,
+      key-west, savannah, rehoboth, new-hope, provincetown, ogunquit.
+      These stay status=draft with the price still flagged VERIFY — no
+      guessed numbers shipped. Needs a manual Redfin/Zillow pull per city
+      (or a Chrome-automation pass once the browser extension is connected)
+      to finish these 9.
+      Added price_src column to cities.csv + a test enforcing every
+      published city carries a real price source. Also found and fixed a
+      real bug while doing this: city pages had a hardcoded "Honest
+      downsides section — written by a human, per city, before publish"
+      placeholder that would have shipped to real visitors on every
+      published page. Added a dylan_note column (blank, human-only per
+      CLAUDE.md) — the "Straight talk" section only renders once Dylan
+      actually writes one; the "Full write-up coming" note now only shows
+      on draft pages, not published ones.
 - [ ] Netlify: connect repo, build command `python3 build.py`, publish `dist/`,
       set `SITE_URL=https://gayretirees.com` env var, point domain
 - [ ] Netlify Forms → Notifications → route relocation-intake + newsletter
