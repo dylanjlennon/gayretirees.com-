@@ -31,6 +31,9 @@ cols = list(csv.DictReader(open("data/collections.csv")))
 expected = ["index.html","states.html","methodology.html","connect.html","thanks.html","404.html","style.css","analytics.js","sitemap.xml","robots.txt"] + [f"city/{c['slug']}.html" for c in cities] + [f"agents/{a['slug']}.html" for a in agents] + [f"moving/{r['route_slug']}.html" for r in routes] + [f"best/{c['slug']}.html" for c in cols]
 missing = [p for p in expected if not os.path.exists(os.path.join(DIST,p))]
 check(f"build: all {len(expected)} expected files exist", not missing, str(missing))
+actual = [os.path.relpath(os.path.join(dp,f),DIST) for dp,_,fs in os.walk(DIST) for f in fs if f != ".DS_Store"]
+orphans = sorted(set(actual) - set(expected))
+check("build: no stale/orphan files left over in dist (removed CSV rows must vanish on rebuild)", not orphans, str(orphans))
 
 # ---------- 3. HTML validity + link graph ----------
 class P(HTMLParser):
@@ -105,10 +108,14 @@ check("ga: 100% of forms carry data-ga-form (form-level tracking coverage)", not
 phone_click_missing = [p for p in html_pages if 'data-ga="phone_click" data-ga-label="header"' not in page_src[p]]
 check(f"ga: header phone CTA tracked (phone_click) on all {len(html_pages)} pages", not phone_click_missing, str(phone_click_missing[:6]))
 
+def email_ok(a):
+    em = a.get("email", "")
+    return bool(em) and "REPLACE" not in em and "VERIFY" not in em and "@" in em
+
 agent_link_missing = [a["slug"] for a in agents if not (
     'data-ga="phone_click"' in page_src.get(f"agents/{a['slug']}.html", "") and
-    'data-ga="email_click"' in page_src.get(f"agents/{a['slug']}.html", ""))]
-check("ga: agent phone + email links tracked on every agent detail page", not agent_link_missing, str(agent_link_missing))
+    (not email_ok(a) or 'data-ga="email_click"' in page_src.get(f"agents/{a['slug']}.html", "")))]
+check("ga: agent phone tracked on every agent detail page, email tracked wherever a verified email is shown", not agent_link_missing, str(agent_link_missing))
 
 # ---------- 5. End-to-end over HTTP ----------
 srv = subprocess.Popen([sys.executable,"-m","http.server","8901","--directory",DIST], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

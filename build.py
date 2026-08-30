@@ -161,14 +161,19 @@ def page(title, body, depth=0, desc=""):
 <script src="{p}analytics.js" defer></script>
 </body></html>"""
 
+def license_ok(a):
+    lic = a.get("license", "")
+    return bool(lic) and "REPLACE" not in lic and "VERIFY" not in lic
+
 def agent_card(a, depth=1):
     p = "../" * depth
     t = {"fullpage":"Partner Agent","featured":"Featured Partner","exclusive":"Exclusive Partner","standard":"Partner Agent"}.get(a["tier"],"Partner Agent")
     link = f'<a class="cta" style="margin-top:10px;padding:9px 18px;font-size:.9rem" rel="sponsored" data-ga="agent_link_click" data-ga-label="{e(a["slug"])}" href="{p}agents/{a["slug"]}.html">Meet {e(a["name"].split()[0])} →</a>' if a["tier"] in ("fullpage","featured") else f'<a class="cta" style="margin-top:10px;padding:9px 18px;font-size:.9rem" rel="sponsored" data-ga="agent_link_click" data-ga-label="{e(a["slug"])}" href="{p}connect.html?agent={a["slug"]}">Work with {e(a["name"].split()[0])} →</a>'
+    verify_line = "Sponsored placement · every partner is license-verified" if license_ok(a) else "Sponsored placement · license verification in progress"
     return f"""<div class="card" style="cursor:default"><div class="pstamp"><small>partner</small>{e(t.split()[0])}</div>
 <h3>{e(a['name'])}</h3><p style="font-weight:700;color:var(--ink)">{e(a['brokerage'])} · since {e(a['since'])}</p>
 <p>{e(a['blurb'])}</p><p style="margin-top:8px;font-size:.82rem">🏳️‍🌈 {e(a['community'])}</p>{link}
-<p style="margin-top:10px;font-size:.7rem;color:var(--mut);text-transform:uppercase;letter-spacing:.06em">Sponsored placement · every partner is license-verified</p></div>"""
+<p style="margin-top:10px;font-size:.7rem;color:var(--mut);text-transform:uppercase;letter-spacing:.06em">{verify_line}</p></div>"""
 
 def lawbadge(code):
     label, cls = LAW.get(code, (code, "mid"))
@@ -229,6 +234,8 @@ document.querySelectorAll('#mx th').forEach((th,i)=>{{let asc=1;th.onclick=()=>{
   asc*=-1;rs.forEach(r=>tb.appendChild(r));
   if (typeof gtag === 'function') gtag('event', 'sort_table', {{column: th.textContent, direction: asc>0?'asc':'desc'}});}}}});
 </script>"""
+
+shutil.rmtree(DIST, ignore_errors=True)
 
 # ---------- city pages ----------
 os.makedirs(os.path.join(DIST, "city"), exist_ok=True)
@@ -360,16 +367,22 @@ for a in agents:
     mk = [city_by_slug[m.strip()] for m in a["market_slugs"].split(";") if m.strip() in city_by_slug]
     mklinks = ", ".join(f'<a href="../city/{m["slug"]}.html">{e(m["city_label"])}</a>' for m in mk)
     testim = f'<div class="note">“{e(a["testimonial"])}”</div>' if a["testimonial"] else ""
+    lic_ok = license_ok(a)
+    lic_suffix = f" ({e(a['license'])})" if lic_ok else ""
+    lic_stamp = "License verified · community partner" if lic_ok else "License verification in progress"
+    email = a.get("email", "")
+    email_ok = bool(email) and "REPLACE" not in email and "VERIFY" not in email and "@" in email
+    email_link = f' · ✉️ <a rel="sponsored" href="mailto:{e(email)}" data-ga="email_click" data-ga-label="agent:{e(a["slug"])}">{e(email)}</a>' if email_ok else ""
     ab = f"""<div class="cityhead"><div class="arc" aria-hidden="true"></div><div class="wrap">
 <div class="kicker">Your partner agent · sponsored placement</div><h1>{e(a['name'])}</h1>
-<p style="margin-top:8px;font-weight:700">{e(a['brokerage'])} · serving {mklinks} · licensed since {e(a['since'])} ({e(a['license'])})</p>
-<span class="stamp">License verified · community partner</span></div></div>
+<p style="margin-top:8px;font-weight:700">{e(a['brokerage'])} · serving {mklinks} · licensed since {e(a['since'])}{lic_suffix}</p>
+<span class="stamp">{lic_stamp}</span></div></div>
 <div class="wrap" style="max-width:760px;padding:30px 20px 40px"><div class="body">
 <p style="font-size:1.05rem">{e(a['blurb'])}</p>
 <p style="margin-top:12px">🏳️‍🌈 <strong>In the community:</strong> {e(a['community'])}</p>
 {testim}
 <h2>Reach {e(a['name'].split()[0])}</h2>
-<p>📞 <a rel="sponsored" href="tel:{e(a['phone'])}" data-ga="phone_click" data-ga-label="agent:{e(a['slug'])}">{e(a['phone'])}</a> · ✉️ <a rel="sponsored" href="mailto:{e(a['email'])}" data-ga="email_click" data-ga-label="agent:{e(a['slug'])}">{e(a['email'])}</a></p>
+<p>📞 <a rel="sponsored" href="tel:{e(a['phone'])}" data-ga="phone_click" data-ga-label="agent:{e(a['slug'])}">{e(a['phone'])}</a>{email_link}</p>
 <a class="cta" href="../connect.html?agent={a['slug']}">Or let us introduce you →</a>
 </div></div>"""
     with open(os.path.join(DIST, "agents", a["slug"] + ".html"), "w") as f:
