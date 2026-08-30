@@ -128,10 +128,10 @@ finally:
     srv.terminate()
 
 # ---------- 5b. Architecture: partner layer, routes, collections ----------
-ps = open(os.path.join(DIST,"city","palm-springs.html")).read()
-check("arch: agent card renders on covered city page", "Your person in Palm Springs" in ps and "Jane Sample" in ps)
-check("arch: sponsored rel on all paid agent links", 'rel="sponsored"' in ps and 'rel="sponsored"' in open(os.path.join(DIST,"agents","jane-sample.html")).read())
-check("arch: paid placement disclosed on card", "Sponsored placement" in ps)
+ash = open(os.path.join(DIST,"city","asheville.html")).read()
+check("arch: agent card renders on covered city page", "Your person in Asheville" in ash and "Dylan Lennon" in ash)
+check("arch: sponsored rel on all paid agent links", 'rel="sponsored"' in ash and 'rel="sponsored"' in open(os.path.join(DIST,"agents","dylan-lennon.html")).read())
+check("arch: paid placement disclosed on card", "Sponsored placement" in ash)
 check("arch: open markets show recruit block", "Raise your hand" in open(os.path.join(DIST,"city","tucson.html")).read())
 rt = open(os.path.join(DIST,"moving","dallas-to-palm-springs.html")).read()
 check("arch: route page compares from/to law + tax", "Moving from Dallas" in rt and "State housing law" in rt and "State income tax" in rt)
@@ -140,13 +140,13 @@ import re as _re
 n_claim = int(_re.search(r"<strong>(\d+) places qualify", ntx).group(1))
 n_true = sum(1 for c in cities if states[c["state_code"]]["income_tax"]=="none")
 check("arch: collection counts computed truthfully from data", n_claim == n_true and ntx.count('class="card"') == n_true)
-check("arch: phone CTA in header sitewide", 'href="tel:+18285550100"' in ps and 'href="tel:+18285550100"' in open(os.path.join(DIST,"index.html")).read())
+check("arch: phone CTA in header sitewide", 'href="tel:+18284120678"' in ash and 'href="tel:+18284120678"' in open(os.path.join(DIST,"index.html")).read())
 cn = open(os.path.join(DIST,"connect.html")).read()
 check("arch: agent preselect wired into intake", 'name="preferred_agent"' in cn and 'URLSearchParams' in cn)
 # ---------- 5c. Analytics: interaction events (filter/sort/agent-link click) ----------
 check("ga: region filter tracked as filter_region event", "gtag('event', 'filter_region'" in home)
 check("ga: table sort tracked as sort_table event", "gtag('event', 'sort_table'" in home)
-check("ga: agent card CTA tracked with agent_link_click", 'data-ga="agent_link_click"' in ps)
+check("ga: agent card CTA tracked with agent_link_click", 'data-ga="agent_link_click"' in ash)
 # ---------- 6. Honesty guarantees ----------
 draft_ok = all(("Status: DRAFT" in open(os.path.join(DIST,"city",c["slug"]+".html")).read()) == (c["status"]=="draft") for c in cities)
 check("integrity: draft stamp matches data status on every city page", draft_ok)

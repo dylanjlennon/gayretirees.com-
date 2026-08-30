@@ -147,7 +147,7 @@ def page(title, body, depth=0, desc=""):
 {GA_SNIPPET}
 <link rel="stylesheet" href="{p}style.css"></head><body>
 <header class="site"><div class="wrap"><a class="brand" href="{p}index.html">GayRetirees.com</a>
-<nav><a href="{p}index.html">Cities</a><a href="{p}best/no-state-income-tax.html">Lists</a><a href="{p}states.html">State laws</a><a href="{p}methodology.html">Methodology</a><a href="{p}connect.html">Talk to us</a></nav><a class="cta" style="margin:0;padding:8px 18px;font-size:.9rem" href="tel:+18285550100" data-ga="phone_click" data-ga-label="header">📞 Call Dylan</a></div></header>
+<nav><a href="{p}index.html">Cities</a><a href="{p}best/no-state-income-tax.html">Lists</a><a href="{p}states.html">State laws</a><a href="{p}methodology.html">Methodology</a><a href="{p}connect.html">Talk to us</a></nav><a class="cta" style="margin:0;padding:8px 18px;font-size:.9rem" href="tel:+18284120678" data-ga="phone_click" data-ga-label="header">📞 Call Dylan</a></div></header>
 {body}
 <div class="nl"><div class="wrap"><h2>Get the quarterly postcard</h2>
 <p style="font-size:.9rem;color:var(--mut);margin-bottom:10px">When the laws, prices, or rankings move, we send one honest email. That\u2019s it — no spam, ever.</p>
