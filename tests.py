@@ -27,7 +27,7 @@ check("data: prices are integers", all(c["median_price_usd"].isdigit() for c in 
 agents = list(csv.DictReader(open("data/agents.csv")))
 routes = list(csv.DictReader(open("data/routes.csv")))
 cols = list(csv.DictReader(open("data/collections.csv")))
-expected = ["index.html","states.html","methodology.html","connect.html","thanks.html","404.html","style.css","sitemap.xml","robots.txt"] + [f"city/{c['slug']}.html" for c in cities] + [f"agents/{a['slug']}.html" for a in agents] + [f"moving/{r['route_slug']}.html" for r in routes] + [f"best/{c['slug']}.html" for c in cols]
+expected = ["index.html","states.html","methodology.html","connect.html","thanks.html","404.html","style.css","analytics.js","sitemap.xml","robots.txt"] + [f"city/{c['slug']}.html" for c in cities] + [f"agents/{a['slug']}.html" for a in agents] + [f"moving/{r['route_slug']}.html" for r in routes] + [f"best/{c['slug']}.html" for c in cols]
 missing = [p for p in expected if not os.path.exists(os.path.join(DIST,p))]
 check(f"build: all {len(expected)} expected files exist", not missing, str(missing))
 
@@ -76,6 +76,39 @@ check("form: newsletter capture on homepage", any(f.get("name")=="newsletter" fo
 city0 = P(); city0.feed(open(os.path.join(DIST,"city",cities[0]["slug"]+".html")).read())
 check("form: newsletter capture on city pages", any(f.get("name")=="newsletter" for f in city0.forms))
 
+# ---------- 4b. Analytics: page-level (GA4) + form-level tracking coverage ----------
+html_pages = [p for p in expected if p.endswith(".html")]
+page_src = {p: open(os.path.join(DIST, p)).read() for p in html_pages}
+m = re.search(r'gtag\("config","(G-[A-Za-z0-9-]+)"\)', page_src[html_pages[0]])
+check("ga: measurement id present in gtag config", bool(m))
+ga_id = m.group(1) if m else None
+ga_page_missing = [p for p in html_pages if not ga_id
+    or f'googletagmanager.com/gtag/js?id={ga_id}' not in page_src[p]
+    or f'gtag("config","{ga_id}")' not in page_src[p]]
+check(f"ga: page-level GA4 snippet on all {len(html_pages)} pages (100% coverage)", not ga_page_missing, str(ga_page_missing[:6]))
+script_missing = [p for p in html_pages if 'analytics.js" defer' not in page_src[p]]
+check(f"ga: analytics.js loaded on all {len(html_pages)} pages", not script_missing, str(script_missing[:6]))
+
+analytics_js = open(os.path.join(DIST, "analytics.js")).read()
+check("ga: analytics.js shipped non-empty", len(analytics_js) > 100)
+check("ga: click delegation wired for data-ga elements", "data-ga" in analytics_js and "addEventListener('click'" in analytics_js)
+check("ga: form_submit tracked via beacon on unload-safe submit", "form_submit" in analytics_js and "transport_type" in analytics_js and "addEventListener('submit'" in analytics_js)
+
+forms_missing_ga = []
+for p in html_pages:
+    pp = P(); pp.feed(page_src[p])
+    for f in pp.forms:
+        if "data-ga-form" not in f: forms_missing_ga.append(f"{p}:{f.get('name')}")
+check("ga: 100% of forms carry data-ga-form (form-level tracking coverage)", not forms_missing_ga, str(forms_missing_ga[:6]))
+
+phone_click_missing = [p for p in html_pages if 'data-ga="phone_click" data-ga-label="header"' not in page_src[p]]
+check(f"ga: header phone CTA tracked (phone_click) on all {len(html_pages)} pages", not phone_click_missing, str(phone_click_missing[:6]))
+
+agent_link_missing = [a["slug"] for a in agents if not (
+    'data-ga="phone_click"' in page_src.get(f"agents/{a['slug']}.html", "") and
+    'data-ga="email_click"' in page_src.get(f"agents/{a['slug']}.html", ""))]
+check("ga: agent phone + email links tracked on every agent detail page", not agent_link_missing, str(agent_link_missing))
+
 # ---------- 5. End-to-end over HTTP ----------
 srv = subprocess.Popen([sys.executable,"-m","http.server","8901","--directory",DIST], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 time.sleep(1.2)
@@ -110,6 +143,10 @@ check("arch: collection counts computed truthfully from data", n_claim == n_true
 check("arch: phone CTA in header sitewide", 'href="tel:+18285550100"' in ps and 'href="tel:+18285550100"' in open(os.path.join(DIST,"index.html")).read())
 cn = open(os.path.join(DIST,"connect.html")).read()
 check("arch: agent preselect wired into intake", 'name="preferred_agent"' in cn and 'URLSearchParams' in cn)
+# ---------- 5c. Analytics: interaction events (filter/sort/agent-link click) ----------
+check("ga: region filter tracked as filter_region event", "gtag('event', 'filter_region'" in home)
+check("ga: table sort tracked as sort_table event", "gtag('event', 'sort_table'" in home)
+check("ga: agent card CTA tracked with agent_link_click", 'data-ga="agent_link_click"' in ps)
 # ---------- 6. Honesty guarantees ----------
 draft_ok = all(("Status: DRAFT" in open(os.path.join(DIST,"city",c["slug"]+".html")).read()) == (c["status"]=="draft") for c in cities)
 check("integrity: draft stamp matches data status on every city page", draft_ok)

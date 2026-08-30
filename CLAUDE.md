@@ -30,5 +30,14 @@ These rules are permanent. Follow them on every change, no exceptions.
 - Any `dylan_note` field is human-written only. Never generate, draft, or
   placeholder that content. A missing note means the block simply doesn't render.
 
+## Analytics & event tracking
+- Every page ships the GA4 snippet (`GA_SNIPPET`) and every form/tracked link
+  carries its `data-ga`/`data-ga-form` attribute — this is enforced by the
+  `ga:` tests in tests.py. When adding a new form, CTA, or outbound link,
+  give it a `data-ga` (click) or `data-ga-form` (submit) attribute so it's
+  monitorable, and extend tests.py's coverage checks accordingly.
+- `GA_ID` in build.py is a placeholder until a real GA4 property exists —
+  see TODO.md. Don't invent a real-looking Measurement ID.
+
 ## Before every commit
 - `build.py` must run clean and the full test suite (`tests.py`) must be green.

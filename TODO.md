@@ -23,4 +23,14 @@ In order:
 - [ ] Netlify Forms → Notifications → route relocation-intake + newsletter
       to Dylan's email
 - [ ] Stripe Payment Links for $29/$79/$149/$249 tiers + $19 founding rate
-- [ ] Analytics (Plausible or GA4) snippet in build.py page template
+- [x] Analytics plumbing done: GA4 snippet on every page (build.py `GA_SNIPPET`),
+      plus a shared `analytics.js` that fires GA4 events for every form
+      submission (`data-ga-form`, sent via beacon so it survives the redirect
+      to thanks.html) and every tracked click (`data-ga`/`data-ga-*` attrs) —
+      phone CTA, agent email/phone links, agent card clicks, region filter,
+      table sort. 12 dedicated tests in tests.py assert 100% page/form
+      coverage. Still using placeholder ID `G-XXXXXXXXXX` (build.py `GA_ID`).
+- [ ] Create the real GA4 property at analytics.google.com, then either
+      hardcode the Measurement ID in build.py's `GA_ID` or set it as a
+      `GA_MEASUREMENT_ID` Netlify env var (overrides the placeholder at
+      build time) — until then no traffic is actually being recorded

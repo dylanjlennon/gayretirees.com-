@@ -6,6 +6,36 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 DIST = os.path.join(ROOT, "dist")
 e = html.escape
 
+# Placeholder until a real GA4 property exists — see TODO.md. Override at
+# build time with the GA_MEASUREMENT_ID env var (e.g. set on Netlify).
+GA_ID = os.environ.get("GA_MEASUREMENT_ID", "G-XXXXXXXXXX")
+GA_SNIPPET = ('<script async src="https://www.googletagmanager.com/gtag/js?id=' + GA_ID + '"></script>'
+    '<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}'
+    'gtag("js",new Date());gtag("config","' + GA_ID + '");</script>')
+
+# Delegated click/submit tracking so every page-level and form-level
+# interaction is one attribute away from being monitorable in GA4.
+# Any element with data-ga="event_name" fires that event on click, with its
+# other data-ga-* attributes as event params. Any <form data-ga-form="x">
+# fires a form_submit event (via sendBeacon, so it survives the page
+# navigating away to thanks.html before the request would otherwise land).
+ANALYTICS_JS = """document.addEventListener('click', function(e){
+  var t = e.target.closest('[data-ga]');
+  if(!t) return;
+  var params = {};
+  for (var i=0;i<t.attributes.length;i++){
+    var a = t.attributes[i];
+    if (a.name.indexOf('data-ga-')===0) params[a.name.slice(8).replace(/-/g,'_')] = a.value;
+  }
+  if (typeof gtag === 'function') gtag('event', t.getAttribute('data-ga'), params);
+});
+document.addEventListener('submit', function(e){
+  var f = e.target;
+  if (!f.hasAttribute('data-ga-form')) return;
+  if (typeof gtag === 'function') gtag('event', 'form_submit', {form_name: f.getAttribute('data-ga-form'), transport_type: 'beacon'});
+});
+"""
+
 def load(name):
     with open(os.path.join(ROOT, "data", name), newline="", encoding="utf-8") as f:
         return list(csv.DictReader(f))
@@ -114,25 +144,27 @@ def page(title, body, depth=0, desc=""):
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{e(title)}</title><meta name="description" content="{e(desc)}">{FONTS}
+{GA_SNIPPET}
 <link rel="stylesheet" href="{p}style.css"></head><body>
 <header class="site"><div class="wrap"><a class="brand" href="{p}index.html">GayRetirees.com</a>
-<nav><a href="{p}index.html">Cities</a><a href="{p}best/no-state-income-tax.html">Lists</a><a href="{p}states.html">State laws</a><a href="{p}methodology.html">Methodology</a><a href="{p}connect.html">Talk to us</a></nav><a class="cta" style="margin:0;padding:8px 18px;font-size:.9rem" href="tel:+18285550100">📞 Call Dylan</a></div></header>
+<nav><a href="{p}index.html">Cities</a><a href="{p}best/no-state-income-tax.html">Lists</a><a href="{p}states.html">State laws</a><a href="{p}methodology.html">Methodology</a><a href="{p}connect.html">Talk to us</a></nav><a class="cta" style="margin:0;padding:8px 18px;font-size:.9rem" href="tel:+18285550100" data-ga="phone_click" data-ga-label="header">📞 Call Dylan</a></div></header>
 {body}
 <div class="nl"><div class="wrap"><h2>Get the quarterly postcard</h2>
 <p style="font-size:.9rem;color:var(--mut);margin-bottom:10px">When the laws, prices, or rankings move, we send one honest email. That\u2019s it — no spam, ever.</p>
-<form name="newsletter" method="POST" action="{p}thanks.html" data-netlify="true" netlify-honeypot="bot-field">
+<form name="newsletter" method="POST" action="{p}thanks.html" data-netlify="true" netlify-honeypot="bot-field" data-ga-form="newsletter">
 <input type="hidden" name="form-name" value="newsletter">
 <p class="hp"><label>Leave blank<input name="bot-field"></label></p>
 <input type="email" name="email" placeholder="you@email.com" required aria-label="Email address">
 <button class="cta" type="submit" style="margin-top:0">Subscribe</button>
 </form></div></div>
 <footer><div class="wrap">Working title — informational only, not legal, tax, or financial advice. Legal data sourced from the Movement Advancement Project; verify before relying. &copy; 2026.</div></footer>
+<script src="{p}analytics.js" defer></script>
 </body></html>"""
 
 def agent_card(a, depth=1):
     p = "../" * depth
     t = {"fullpage":"Partner Agent","featured":"Featured Partner","exclusive":"Exclusive Partner","standard":"Partner Agent"}.get(a["tier"],"Partner Agent")
-    link = f'<a class="cta" style="margin-top:10px;padding:9px 18px;font-size:.9rem" rel="sponsored" href="{p}agents/{a["slug"]}.html">Meet {e(a["name"].split()[0])} →</a>' if a["tier"] in ("fullpage","featured") else f'<a class="cta" style="margin-top:10px;padding:9px 18px;font-size:.9rem" rel="sponsored" href="{p}connect.html?agent={a["slug"]}">Work with {e(a["name"].split()[0])} →</a>'
+    link = f'<a class="cta" style="margin-top:10px;padding:9px 18px;font-size:.9rem" rel="sponsored" data-ga="agent_link_click" data-ga-label="{e(a["slug"])}" href="{p}agents/{a["slug"]}.html">Meet {e(a["name"].split()[0])} →</a>' if a["tier"] in ("fullpage","featured") else f'<a class="cta" style="margin-top:10px;padding:9px 18px;font-size:.9rem" rel="sponsored" data-ga="agent_link_click" data-ga-label="{e(a["slug"])}" href="{p}connect.html?agent={a["slug"]}">Work with {e(a["name"].split()[0])} →</a>'
     return f"""<div class="card" style="cursor:default"><div class="pstamp"><small>partner</small>{e(t.split()[0])}</div>
 <h3>{e(a['name'])}</h3><p style="font-weight:700;color:var(--ink)">{e(a['brokerage'])} · since {e(a['since'])}</p>
 <p>{e(a['blurb'])}</p><p style="margin-top:8px;font-size:.82rem">🏳️‍🌈 {e(a['community'])}</p>{link}
@@ -187,13 +219,15 @@ index_body = f"""<div class="hero"><div class="arc" aria-hidden="true"></div><di
 const tb=document.querySelector('#mx tbody');
 document.querySelectorAll('.chip').forEach(ch=>ch.onclick=()=>{{
   document.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));ch.classList.add('on');
-  const r=ch.dataset.r;tb.querySelectorAll('tr').forEach(tr=>tr.style.display=(r==='all'||tr.dataset.region===r)?'':'none');}});
+  const r=ch.dataset.r;tb.querySelectorAll('tr').forEach(tr=>tr.style.display=(r==='all'||tr.dataset.region===r)?'':'none');
+  if (typeof gtag === 'function') gtag('event', 'filter_region', {{region: r}});}});
 document.querySelectorAll('#mx th').forEach((th,i)=>{{let asc=1;th.onclick=()=>{{
   const rs=[...tb.querySelectorAll('tr')];rs.sort((a,b)=>{{
     const av=a.cells[i].dataset.v??a.cells[i].textContent, bv=b.cells[i].dataset.v??b.cells[i].textContent;
     const an=parseFloat(av), bn=parseFloat(bv);
     return (isNaN(an)||isNaN(bn))?av.localeCompare(bv)*asc:(an-bn)*asc;}});
-  asc*=-1;rs.forEach(r=>tb.appendChild(r));}}}});
+  asc*=-1;rs.forEach(r=>tb.appendChild(r));
+  if (typeof gtag === 'function') gtag('event', 'sort_table', {{column: th.textContent, direction: asc>0?'asc':'desc'}});}}}});
 </script>"""
 
 # ---------- city pages ----------
@@ -280,7 +314,7 @@ conn_body = f"""<div class="hero"><div class="wrap"><div class="kicker">Work wit
 <p>Tell us which markets you're considering and what you're trying to do — downsize, buy the forever house, sell first, time the move. We'll connect you with a vetted, licensed agent in the market <em>you</em> choose and stay involved through closing. Referrals are made broker-to-broker and disclosed in writing.</p>
 </div></div>
 <div class="wrap" style="max-width:760px;padding:30px 20px 40px">
-<form name="relocation-intake" method="POST" action="thanks.html" data-netlify="true" netlify-honeypot="bot-field">
+<form name="relocation-intake" method="POST" action="thanks.html" data-netlify="true" netlify-honeypot="bot-field" data-ga-form="relocation_intake">
 <input type="hidden" name="form-name" value="relocation-intake">
 <input type="hidden" name="preferred_agent" id="pref-agent" value="">
 <script>const ag=new URLSearchParams(location.search).get("agent");if(ag)document.getElementById("pref-agent").value=ag;</script>
@@ -302,6 +336,7 @@ conn_body = f"""<div class="hero"><div class="wrap"><div class="kicker">Work wit
 
 os.makedirs(DIST, exist_ok=True)
 with open(os.path.join(DIST, "style.css"), "w") as f: f.write(CSS)
+with open(os.path.join(DIST, "analytics.js"), "w") as f: f.write(ANALYTICS_JS)
 with open(os.path.join(DIST, "index.html"), "w") as f:
     f.write(page("GayRetirees.com — 23 places, one honest table", index_body, desc="Side-by-side data on where LGBTQ+ people retire: laws, taxes, prices, healthcare, climate."))
 with open(os.path.join(DIST, "states.html"), "w") as f: f.write(page("State laws & taxes — GayRetirees.com", states_body))
@@ -324,7 +359,7 @@ for a in agents:
 <p style="margin-top:12px">🏳️‍🌈 <strong>In the community:</strong> {e(a['community'])}</p>
 {testim}
 <h2>Reach {e(a['name'].split()[0])}</h2>
-<p>📞 <a rel="sponsored" href="tel:{e(a['phone'])}">{e(a['phone'])}</a> · ✉️ <a rel="sponsored" href="mailto:{e(a['email'])}">{e(a['email'])}</a></p>
+<p>📞 <a rel="sponsored" href="tel:{e(a['phone'])}" data-ga="phone_click" data-ga-label="agent:{e(a['slug'])}">{e(a['phone'])}</a> · ✉️ <a rel="sponsored" href="mailto:{e(a['email'])}" data-ga="email_click" data-ga-label="agent:{e(a['slug'])}">{e(a['email'])}</a></p>
 <a class="cta" href="../connect.html?agent={a['slug']}">Or let us introduce you →</a>
 </div></div>"""
     with open(os.path.join(DIST, "agents", a["slug"] + ".html"), "w") as f:
