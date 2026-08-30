@@ -1,0 +1,5 @@
+slug,title,blurb,rule
+no-state-income-tax,Places with no state income tax,"Keep the pension whole. Every place on this list sits in a state that doesn't touch your income.",income_tax==none
+explicit-protections,Places with explicit state protections,"Every place here is in a state whose housing and public-accommodation laws name sexual orientation and gender identity explicitly.",housing_law==explicit
+under-400k,Places under $400K,"The median home costs less than $400,000 in every place on this list. Sunshine on a budget.",price<400000
+walkable-towns,Walkable towns,"Places where the errands, the coffee, and the friends are on foot.",walk~walkable

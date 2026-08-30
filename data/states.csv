@@ -1,0 +1,24 @@
+state_code,state_name,housing_law,pa_law,ltc_protections,income_tax,ss_taxed,estate_inheritance_tax,tax_note,law_src,law_asof
+CA,California,explicit,explicit,yes,graduated-high,no,none,High income tax; Prop 13 caps property tax growth,https://www.lgbtmap.org/equality-maps/non_discrimination_laws,2026-08 VERIFY
+FL,Florida,none,none,no,none,no,none,No state income tax; homestead exemption; rising insurance costs,https://www.lgbtmap.org/equality-maps/non_discrimination_laws,2026-08 VERIFY
+NC,North Carolina,none,none,no,flat-low,no,none,Flat ~4.5% income tax; SS exempt; local NDOs in some cities,https://www.lgbtmap.org/equality-maps/non_discrimination_laws,2026-08 VERIFY
+DE,Delaware,explicit,explicit,VERIFY,graduated-mid,no,none,No sales tax; among lowest property taxes in US; SS exempt,https://www.lgbtmap.org/equality-maps/non_discrimination_laws,2026-08 VERIFY
+AZ,Arizona,none,none,no,flat-low,no,none,Flat 2.5% income tax; SS exempt; local NDOs in Tucson & Phoenix,https://www.lgbtmap.org/equality-maps/non_discrimination_laws,2026-08 VERIFY
+NM,New Mexico,explicit,explicit,VERIFY,graduated-mid,partial,none,SS exempt below income thresholds; low property taxes,https://www.lgbtmap.org/equality-maps/non_discrimination_laws,2026-08 VERIFY
+NV,Nevada,explicit,explicit,VERIFY,none,no,none,No state income tax,https://www.lgbtmap.org/equality-maps/non_discrimination_laws,2026-08 VERIFY
+CO,Colorado,explicit,explicit,VERIFY,flat-low,partial,none,Flat income tax; large 65+ SS/pension deduction,https://www.lgbtmap.org/equality-maps/non_discrimination_laws,2026-08 VERIFY
+OR,Oregon,explicit,explicit,VERIFY,graduated-high,no,estate,No sales tax; estate tax kicks in at ~$1M,https://www.lgbtmap.org/equality-maps/non_discrimination_laws,2026-08 VERIFY
+TX,Texas,none,none,no,none,no,none,No state income tax; high property taxes; senior freeze available,https://www.lgbtmap.org/equality-maps/non_discrimination_laws,2026-08 VERIFY
+GA,Georgia,none,none,no,flat-low,no,none,Large retirement income exclusion 62+; SS exempt,https://www.lgbtmap.org/equality-maps/non_discrimination_laws,2026-08 VERIFY
+MA,Massachusetts,explicit,explicit,yes,flat-mid,no,estate,Estate tax above $2M; strong senior services,https://www.lgbtmap.org/equality-maps/non_discrimination_laws,2026-08 VERIFY
+ME,Maine,explicit,explicit,VERIFY,graduated-mid,no,estate,Pension deduction; estate tax above ~$7M,https://www.lgbtmap.org/equality-maps/non_discrimination_laws,2026-08 VERIFY
+PA,Pennsylvania,interpreted,interpreted,no,flat-low,no,inheritance,Flat 3.07%; retirement income (SS/401k/pension) fully exempt; inheritance tax applies,https://www.lgbtmap.org/equality-maps/non_discrimination_laws,2026-08 VERIFY
+MI,Michigan,explicit,explicit,VERIFY,flat-low,no,none,ELCRA amended 2023 to add explicit SOGI protections; retirement tax phase-out,https://www.lgbtmap.org/equality-maps/non_discrimination_laws,2026-08 VERIFY
+AR,Arkansas,none,none,no,flat-low,no,none,Low cost; no statewide SOGI protections; Eureka Springs has local ordinance,https://www.lgbtmap.org/equality-maps/non_discrimination_laws,2026-08 VERIFY
+NY,New York,explicit,explicit,VERIFY,graduated-high,no,estate,High income tax; estate tax; NYC adds local tax,https://www.lgbtmap.org/equality-maps/non_discrimination_laws,2026-08 VERIFY
+NJ,New Jersey,explicit,explicit,VERIFY,graduated-high,no,inheritance,High property taxes; inheritance tax applies to some heirs,https://www.lgbtmap.org/equality-maps/non_discrimination_laws,2026-08 VERIFY
+IL,Illinois,explicit,explicit,VERIFY,flat-mid,no,estate,Flat 4.95%; retirement income exempt from state tax; estate tax above ~$4M,https://www.lgbtmap.org/equality-maps/non_discrimination_laws,2026-08 VERIFY
+OH,Ohio,none,none,no,flat-low,no,none,No statewide SOGI law; ordinances in Columbus/Cincinnati/Cleveland; modest income tax,https://www.lgbtmap.org/equality-maps/non_discrimination_laws,2026-08 VERIFY
+DC,District of Columbia,explicit,explicit,VERIFY,graduated-high,no,estate,High income tax; estate tax; strong legal protections,https://www.lgbtmap.org/equality-maps/non_discrimination_laws,2026-08 VERIFY
+TN,Tennessee,none,none,no,none,no,none,No state income tax,https://www.lgbtmap.org/equality-maps/non_discrimination_laws,2026-08 VERIFY
+SC,South Carolina,none,none,no,graduated-mid,no,none,Large senior income deductions; SS exempt,https://www.lgbtmap.org/equality-maps/non_discrimination_laws,2026-08 VERIFY
