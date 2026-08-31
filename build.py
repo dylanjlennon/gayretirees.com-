@@ -64,7 +64,7 @@ LAW = {"explicit": ("Explicit state law", "ok"), "interpreted": ("Interpreted by
        "none": ("No statewide law", "no"), "VERIFY": ("Needs verification", "mid")}
 
 CSS = """
-:root{--sand:#F7EBD8;--cream:#FFF9EE;--ink:#3A2A1E;--pool:#177E7E;--poolt:#DDF0EC;--coral:#F2665E;--coralt:#FBE3DC;--sun:#F5B841;--sunt:#FBEFD2;--line:#E4D2B4;--mut:#7A6A57}
+:root{--sand:#F7EBD8;--cream:#FFF9EE;--ink:#3A2A1E;--pool:#106868;--poolt:#DDF0EC;--coral:#C7443C;--coralt:#FBE3DC;--sun:#F5B841;--sunt:#FBEFD2;--line:#E4D2B4;--mut:#6E5E4B}
 *{box-sizing:border-box;margin:0}
 body{background:var(--sand);color:var(--ink);font:16.5px/1.62 "Karla",system-ui,sans-serif}
 h1,h2,h3,.brand{font-family:"Alfa Slab One",Georgia,serif;font-weight:400;letter-spacing:.01em}
@@ -73,7 +73,7 @@ a{color:var(--pool)}
 header.site{padding:16px 0;border-bottom:3px solid var(--ink);background:var(--sand)}
 header.site .wrap{display:flex;align-items:baseline;gap:22px;flex-wrap:wrap}
 .brand{font-size:1.25rem;color:var(--coral);text-decoration:none;text-shadow:2px 2px 0 var(--sunt)}
-nav a{text-decoration:none;color:var(--ink);font-weight:700;font-size:.93rem;margin-right:16px;border-bottom:3px solid transparent}
+nav a{display:inline-block;text-decoration:none;color:var(--ink);font-weight:700;font-size:.93rem;margin-right:16px;padding:10px 0;border-bottom:3px solid transparent}
 nav a:hover{border-bottom-color:var(--sun)}
 .hero{padding:64px 0 46px;position:relative;overflow:hidden;border-bottom:3px solid var(--ink)}
 .hero .wrap{position:relative;z-index:1}
@@ -81,13 +81,14 @@ nav a:hover{border-bottom-color:var(--sun)}
 .hero p{max-width:56ch;margin-top:16px;font-size:1.1rem}
 .arc{position:absolute;right:4%;bottom:-4px;width:380px;height:190px;border-radius:380px 380px 0 0;background:radial-gradient(circle at 50% 100%,var(--sun) 0 20%,transparent 20% 27%,var(--coral) 27% 47%,transparent 47% 54%,var(--pool) 54% 74%,transparent 74%);opacity:.9;pointer-events:none}
 @media(max-width:860px){.arc{width:240px;height:120px;opacity:.35;right:-30px}}
+@media(max-width:600px){.arc{display:none}}
 .kicker{font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:var(--coral);font-weight:700;margin-bottom:12px}
 .stamp{display:inline-block;border:2px solid var(--ink);border-radius:999px;padding:5px 16px;font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--ink);opacity:.72;transform:rotate(-2deg);margin-top:18px;background:transparent}
 .controls{display:flex;gap:8px;flex-wrap:wrap;padding:20px 0 6px}
-.chip{border:2px solid var(--ink);background:var(--cream);border-radius:999px;padding:6px 15px;font:700 .85rem "Karla";cursor:pointer;box-shadow:2px 2px 0 rgba(58,42,30,.18)}
+.chip{border:2px solid var(--ink);background:var(--cream);border-radius:999px;padding:10px 16px;font:700 .92rem "Karla";cursor:pointer;box-shadow:2px 2px 0 rgba(58,42,30,.18)}
 .chip.on{background:var(--pool);color:#fff;border-color:var(--ink)}
 .chip:active{transform:translate(1px,1px);box-shadow:none}
-.pill{display:inline-block;text-decoration:none;border:2px solid var(--ink);background:var(--cream);color:var(--ink);border-radius:999px;padding:6px 15px;font:700 .85rem "Karla";box-shadow:2px 2px 0 rgba(58,42,30,.18)}
+.pill{display:inline-block;text-decoration:none;border:2px solid var(--ink);background:var(--cream);color:var(--ink);border-radius:999px;padding:10px 16px;font:700 .92rem "Karla";box-shadow:2px 2px 0 rgba(58,42,30,.18)}
 .pill:hover{background:var(--poolt)}
 .pill:active{transform:translate(1px,1px);box-shadow:none}
 .tblwrap{overflow-x:auto;border:2px solid var(--ink);border-radius:12px;background:var(--cream);margin:14px 0 44px;box-shadow:5px 5px 0 rgba(58,42,30,.14)}
@@ -145,7 +146,7 @@ button.cta{border:2px solid var(--ink);cursor:pointer;font-size:1rem}
 .hp{position:absolute;left:-9999px}
 footer{border-top:3px solid var(--ink);margin-top:0;padding:26px 0;font-size:.84rem;color:var(--mut);background:var(--sand)}
 .cta{display:inline-block;background:var(--coral);color:#fff;text-decoration:none;padding:12px 24px;border-radius:999px;font-weight:700;margin-top:18px;box-shadow:3px 3px 0 rgba(58,42,30,.25)}
-.cta:hover{background:#DB4F47}
+.cta:hover{background:#A83228}
 .cta:active{transform:translate(1px,1px);box-shadow:none}
 """
 
