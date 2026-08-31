@@ -31,7 +31,7 @@ check("data: prices are integers", all(c["median_price_usd"].isdigit() for c in 
 agents = list(csv.DictReader(open("data/agents.csv")))
 routes = list(csv.DictReader(open("data/routes.csv")))
 cols = list(csv.DictReader(open("data/collections.csv")))
-expected = ["index.html","states.html","methodology.html","connect.html","agent-signup.html","thanks.html","404.html","style.css","analytics.js","sitemap.xml","robots.txt"] + [f"city/{c['slug']}.html" for c in cities] + [f"agents/{a['slug']}.html" for a in agents] + [f"moving/{r['route_slug']}.html" for r in routes] + [f"best/{c['slug']}.html" for c in cols]
+expected = ["index.html","states.html","methodology.html","connect.html","agent-signup.html","agent-profile.html","thanks.html","404.html","style.css","analytics.js","sitemap.xml","robots.txt"] + [f"city/{c['slug']}.html" for c in cities] + [f"agents/{a['slug']}.html" for a in agents] + [f"moving/{r['route_slug']}.html" for r in routes] + [f"best/{c['slug']}.html" for c in cols]
 missing = [p for p in expected if not os.path.exists(os.path.join(DIST,p))]
 check(f"build: all {len(expected)} expected files exist", not missing, str(missing))
 actual = [os.path.relpath(os.path.join(dp,f),DIST) for dp,_,fs in os.walk(DIST) for f in fs if f != ".DS_Store"]
@@ -111,14 +111,12 @@ check("ga: 100% of forms carry data-ga-form (form-level tracking coverage)", not
 phone_click_missing = [p for p in html_pages if 'data-ga="phone_click" data-ga-label="header"' not in page_src[p]]
 check(f"ga: header phone CTA tracked (phone_click) on all {len(html_pages)} pages", not phone_click_missing, str(phone_click_missing[:6]))
 
-def email_ok(a):
-    em = a.get("email", "")
-    return bool(em) and "REPLACE" not in em and "VERIFY" not in em and "@" in em
-
-agent_link_missing = [a["slug"] for a in agents if not (
-    'data-ga="phone_click"' in page_src.get(f"agents/{a['slug']}.html", "") and
-    (not email_ok(a) or 'data-ga="email_click"' in page_src.get(f"agents/{a['slug']}.html", "")))]
-check("ga: agent phone tracked on every agent detail page, email tracked wherever a verified email is shown", not agent_link_missing, str(agent_link_missing))
+agent_intro_missing = [a["slug"] for a in agents if 'data-ga="agent_intro_click"' not in page_src.get(f"agents/{a['slug']}.html", "")]
+check("ga: every agent detail page routes contact through the intake form (agent_intro_click), no direct-contact bypass", not agent_intro_missing, str(agent_intro_missing))
+bypass_present = [a["slug"] for a in agents if
+    f'href="tel:{a["phone"]}"' in page_src.get(f"agents/{a['slug']}.html", "") or
+    (a.get("email") and f'href="mailto:{a["email"]}"' in page_src.get(f"agents/{a['slug']}.html", ""))]
+check("integrity: no raw tel:/mailto: bypass to the agent's own number/email on agent detail pages (every lead must route through Dylan)", not bypass_present, str(bypass_present))
 
 # ---------- 5. End-to-end over HTTP ----------
 srv = subprocess.Popen([sys.executable,"-m","http.server","8901","--directory",DIST], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

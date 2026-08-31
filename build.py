@@ -400,11 +400,11 @@ conn_body = f"""<div class="hero"><div class="wrap"><div class="kicker">Work wit
 <button class="cta" type="submit">Send my shortlist</button>
 </form></div>"""
 
-# ---------- agent signup ----------
+# ---------- agent signup (step 1 of 2 — low friction) ----------
 market_options = "".join(f'<option value="{e(c["slug"])}">{e(c["city_label"])}</option>' for c in sorted(cities, key=lambda x: x["city_label"]))
-signup_body = f"""<div class="hero"><div class="wrap"><div class="kicker">For agents</div>
+signup_body = f"""<div class="hero"><div class="wrap"><div class="kicker">For agents · step 1 of 2</div>
 <h1>Join the directory.</h1>
-<p>We refer buyers directly to you in the market you choose — no bidding, no shared leads. Pick the arrangement that fits: pay nothing and we take a referral fee only when a deal closes, or pay a flat monthly rate for a lower referral fee on every close. Every application is reviewed by hand before it goes live; nothing here auto-publishes.</p>
+<p>Tell us who you are — that's it for now. We verify your license, then follow up for a short city blurb and to confirm which arrangement you want. Nothing here auto-publishes; every applicant is reviewed by hand first.</p>
 </div></div>
 <div class="wrap" style="max-width:760px;padding:30px 20px 40px">
 <form name="agent-signup" method="POST" action="thanks.html" data-netlify="true" netlify-honeypot="bot-field" data-ga-form="agent_signup" enctype="multipart/form-data">
@@ -420,13 +420,30 @@ signup_body = f"""<div class="hero"><div class="wrap"><div class="kicker">For ag
 <option value="">Choose one…</option>{market_options}</select></div>
 </div>
 <label for="ah">Headshot</label><input id="ah" type="file" name="headshot" accept="image/*">
-<label for="abio">Short bio</label><textarea id="abio" name="bio" rows="4" placeholder="A couple sentences on your background and why you work with LGBTQ+ clients well."></textarea>
-<fieldset><legend>Which arrangement do you want?</legend>
-<label class="mk"><input type="radio" name="pricing_plan" value="referral-only-35" required>Referral-only — 35% of commission, only when a deal closes, no monthly fee</label><br>
-<label class="mk"><input type="radio" name="pricing_plan" value="paid-15" required>$129/month — 15% of commission on close</label>
+<p style="font-size:.8rem;color:var(--mut);margin-top:12px">Submitting doesn't guarantee placement — every applicant is reviewed for license status before appearing on the site.</p>
+<button class="cta" type="submit">Submit</button>
+</form></div>"""
+
+# ---------- agent profile (step 2 of 2 — sent manually to verified agents) ----------
+profile_body = f"""<div class="hero"><div class="wrap"><div class="kicker">For agents · step 2 of 2</div>
+<h1>Finish your profile.</h1>
+<p>You're verified — almost done. Write a couple sentences for your market, then pick how you want to be listed.</p>
+</div></div>
+<div class="wrap" style="max-width:760px;padding:30px 20px 40px">
+<form name="agent-profile" method="POST" action="thanks.html" data-netlify="true" netlify-honeypot="bot-field" data-ga-form="agent_profile">
+<input type="hidden" name="form-name" value="agent-profile">
+<p class="hp"><label>Leave blank<input name="bot-field"></label></p>
+<div class="formgrid">
+<div><label for="pn">Name</label><input id="pn" name="name" required autocomplete="name"></div>
+<div><label for="pe">Email</label><input id="pe" type="email" name="email" required autocomplete="email"></div>
+</div>
+<label for="pb">Short bio for your city</label><textarea id="pb" name="bio" rows="4" placeholder="A couple sentences on your background and why you work with LGBTQ+ clients well." required></textarea>
+<fieldset><legend>How do you want to be listed?</legend>
+<label class="mk"><input type="radio" name="pricing_plan" value="standard-25" required>Standard listing — 25% referral fee when a deal closes, no monthly cost</label><br>
+<label class="mk"><input type="radio" name="pricing_plan" value="top-15" required>Top agent for my city — $29/month, 15% referral fee, exclusive (one agent per market)</label>
 </fieldset>
-<p style="font-size:.8rem;color:var(--mut);margin-top:12px">Referrals are made broker-to-broker and disclosed in writing. Submitting doesn't guarantee placement — every applicant is reviewed for license status before appearing on the site.</p>
-<button class="cta" type="submit">Submit application</button>
+<p style="font-size:.8rem;color:var(--mut);margin-top:12px">Choosing "Top agent" doesn't charge you here — we'll follow up with a payment link. Referrals are made broker-to-broker and disclosed in writing.</p>
+<button class="cta" type="submit">Submit</button>
 </form></div>"""
 
 os.makedirs(DIST, exist_ok=True)
@@ -438,6 +455,7 @@ with open(os.path.join(DIST, "states.html"), "w") as f: f.write(page("State laws
 with open(os.path.join(DIST, "methodology.html"), "w") as f: f.write(page("Methodology — GayRetirees.com", meth_body))
 with open(os.path.join(DIST, "connect.html"), "w") as f: f.write(page("Talk to us — GayRetirees.com", conn_body))
 with open(os.path.join(DIST, "agent-signup.html"), "w") as f: f.write(page("Join the directory — GayRetirees.com", signup_body, desc="Apply to be a partner agent on GayRetirees.com."))
+with open(os.path.join(DIST, "agent-profile.html"), "w") as f: f.write(page("Finish your profile — GayRetirees.com", profile_body, desc="Finish your agent profile on GayRetirees.com."))
 
 
 # ---------- agent pages ----------
@@ -449,9 +467,6 @@ for a in agents:
     lic_ok = license_ok(a)
     lic_suffix = f" ({e(a['license'])})" if lic_ok else ""
     lic_stamp = "License verified · community partner" if lic_ok else "License verification in progress"
-    email = a.get("email", "")
-    email_ok = bool(email) and "REPLACE" not in email and "VERIFY" not in email and "@" in email
-    email_link = f' · ✉️ <a rel="sponsored" href="mailto:{e(email)}" data-ga="email_click" data-ga-label="agent:{e(a["slug"])}">{e(email)}</a>' if email_ok else ""
     ab = f"""<div class="cityhead"><div class="arc" aria-hidden="true"></div><div class="wrap">
 <div class="kicker">Your partner agent · sponsored placement</div><h1>{e(a['name'])}</h1>
 <p style="margin-top:8px;font-weight:700">{e(a['brokerage'])} · serving {mklinks} · licensed since {e(a['since'])}{lic_suffix}</p>
@@ -461,8 +476,8 @@ for a in agents:
 <p style="margin-top:12px">🏳️‍🌈 <strong>In the community:</strong> {e(a['community'])}</p>
 {testim}
 <h2>Reach {e(a['name'].split()[0])}</h2>
-<p>📞 <a rel="sponsored" href="tel:{e(a['phone'])}" data-ga="phone_click" data-ga-label="agent:{e(a['slug'])}">{e(a['phone'])}</a>{email_link}</p>
-<a class="cta" href="../connect.html?agent={a['slug']}">Or let us introduce you →</a>
+<p>Every inquiry comes through us first, so we can make a warm introduction and keep the referral on record — that's what keeps {e(a['name'].split()[0])}'s placement here free of bidding wars.</p>
+<a class="cta" rel="sponsored" href="../connect.html?agent={a['slug']}" data-ga="agent_intro_click" data-ga-label="agent:{e(a['slug'])}">Get introduced to {e(a['name'].split()[0])} →</a>
 </div></div>"""
     with open(os.path.join(DIST, "agents", a["slug"] + ".html"), "w") as f:
         f.write(page(a["name"] + " — Partner Agent — GayRetirees.com", ab, depth=1, desc=a["blurb"][:150]))
