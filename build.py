@@ -169,7 +169,7 @@ def page(title, body, depth=0, desc=""):
 <input type="email" name="email" placeholder="you@email.com" required aria-label="Email address">
 <button class="cta" type="submit" style="margin-top:0">Subscribe</button>
 </form></div></div>
-<footer><div class="wrap">Working title — informational only, not legal, tax, or financial advice. Legal data sourced from the Movement Advancement Project; verify before relying. &copy; 2026.</div></footer>
+<footer><div class="wrap">Working title — informational only, not legal, tax, or financial advice. Legal data sourced from the Movement Advancement Project; verify before relying. &copy; 2026. · Real estate agent? <a href="{p}agent-signup.html">Join the directory →</a></div></footer>
 <script src="{p}analytics.js" defer></script>
 </body></html>"""
 
@@ -400,6 +400,35 @@ conn_body = f"""<div class="hero"><div class="wrap"><div class="kicker">Work wit
 <button class="cta" type="submit">Send my shortlist</button>
 </form></div>"""
 
+# ---------- agent signup ----------
+market_options = "".join(f'<option value="{e(c["slug"])}">{e(c["city_label"])}</option>' for c in sorted(cities, key=lambda x: x["city_label"]))
+signup_body = f"""<div class="hero"><div class="wrap"><div class="kicker">For agents</div>
+<h1>Join the directory.</h1>
+<p>We refer buyers directly to you in the market you choose — no bidding, no shared leads. Pick the arrangement that fits: pay nothing and we take a referral fee only when a deal closes, or pay a flat monthly rate for a lower referral fee on every close. Every application is reviewed by hand before it goes live; nothing here auto-publishes.</p>
+</div></div>
+<div class="wrap" style="max-width:760px;padding:30px 20px 40px">
+<form name="agent-signup" method="POST" action="thanks.html" data-netlify="true" netlify-honeypot="bot-field" data-ga-form="agent_signup" enctype="multipart/form-data">
+<input type="hidden" name="form-name" value="agent-signup">
+<p class="hp"><label>Leave blank<input name="bot-field"></label></p>
+<div class="formgrid">
+<div><label for="an">Name</label><input id="an" name="name" required autocomplete="name"></div>
+<div><label for="ae">Email</label><input id="ae" type="email" name="email" required autocomplete="email"></div>
+<div><label for="ap">Phone</label><input id="ap" type="tel" name="phone" required autocomplete="tel"></div>
+<div><label for="ab">Brokerage</label><input id="ab" name="brokerage" required></div>
+<div><label for="al">License number</label><input id="al" name="license" required></div>
+<div><label for="am">Primary market</label><select id="am" name="primary_market" required>
+<option value="">Choose one…</option>{market_options}</select></div>
+</div>
+<label for="ah">Headshot</label><input id="ah" type="file" name="headshot" accept="image/*">
+<label for="abio">Short bio</label><textarea id="abio" name="bio" rows="4" placeholder="A couple sentences on your background and why you work with LGBTQ+ clients well."></textarea>
+<fieldset><legend>Which arrangement do you want?</legend>
+<label class="mk"><input type="radio" name="pricing_plan" value="referral-only-35" required>Referral-only — 35% of commission, only when a deal closes, no monthly fee</label><br>
+<label class="mk"><input type="radio" name="pricing_plan" value="paid-15" required>$129/month — 15% of commission on close</label>
+</fieldset>
+<p style="font-size:.8rem;color:var(--mut);margin-top:12px">Referrals are made broker-to-broker and disclosed in writing. Submitting doesn't guarantee placement — every applicant is reviewed for license status before appearing on the site.</p>
+<button class="cta" type="submit">Submit application</button>
+</form></div>"""
+
 os.makedirs(DIST, exist_ok=True)
 with open(os.path.join(DIST, "style.css"), "w") as f: f.write(CSS)
 with open(os.path.join(DIST, "analytics.js"), "w") as f: f.write(ANALYTICS_JS)
@@ -408,6 +437,7 @@ with open(os.path.join(DIST, "index.html"), "w") as f:
 with open(os.path.join(DIST, "states.html"), "w") as f: f.write(page("State laws & taxes — GayRetirees.com", states_body))
 with open(os.path.join(DIST, "methodology.html"), "w") as f: f.write(page("Methodology — GayRetirees.com", meth_body))
 with open(os.path.join(DIST, "connect.html"), "w") as f: f.write(page("Talk to us — GayRetirees.com", conn_body))
+with open(os.path.join(DIST, "agent-signup.html"), "w") as f: f.write(page("Join the directory — GayRetirees.com", signup_body, desc="Apply to be a partner agent on GayRetirees.com."))
 
 
 # ---------- agent pages ----------
@@ -488,7 +518,7 @@ nf_body = """<div class="hero"><div class="wrap"><div class="kicker">404</div>
 with open(os.path.join(DIST, "thanks.html"), "w") as f: f.write(page("Thanks — GayRetirees.com", thanks_body))
 with open(os.path.join(DIST, "404.html"), "w") as f: f.write(page("Not found — GayRetirees.com", nf_body))
 SITE_URL = os.environ.get("SITE_URL", "https://gayretirees.com")  # set to https://yourdomain.com at deploy for absolute sitemap URLs
-pages = ["index.html","states.html","methodology.html","connect.html"] + [f"city/{c['slug']}.html" for c in cities] + [f"agents/{a['slug']}.html" for a in agents if a["status"]=="active"] + [f"moving/{r['route_slug']}.html" for r in routes] + [f"best/{c['slug']}.html" for c in collections]
+pages = ["index.html","states.html","methodology.html","connect.html","agent-signup.html"] + [f"city/{c['slug']}.html" for c in cities] + [f"agents/{a['slug']}.html" for a in agents if a["status"]=="active"] + [f"moving/{r['route_slug']}.html" for r in routes] + [f"best/{c['slug']}.html" for c in collections]
 with open(os.path.join(DIST, "sitemap.xml"), "w") as f:
     f.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
             "".join(f"<url><loc>{SITE_URL}/{u}</loc></url>\n" for u in pages) + "</urlset>")

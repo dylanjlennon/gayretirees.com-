@@ -31,7 +31,7 @@ check("data: prices are integers", all(c["median_price_usd"].isdigit() for c in 
 agents = list(csv.DictReader(open("data/agents.csv")))
 routes = list(csv.DictReader(open("data/routes.csv")))
 cols = list(csv.DictReader(open("data/collections.csv")))
-expected = ["index.html","states.html","methodology.html","connect.html","thanks.html","404.html","style.css","analytics.js","sitemap.xml","robots.txt"] + [f"city/{c['slug']}.html" for c in cities] + [f"agents/{a['slug']}.html" for a in agents] + [f"moving/{r['route_slug']}.html" for r in routes] + [f"best/{c['slug']}.html" for c in cols]
+expected = ["index.html","states.html","methodology.html","connect.html","agent-signup.html","thanks.html","404.html","style.css","analytics.js","sitemap.xml","robots.txt"] + [f"city/{c['slug']}.html" for c in cities] + [f"agents/{a['slug']}.html" for a in agents] + [f"moving/{r['route_slug']}.html" for r in routes] + [f"best/{c['slug']}.html" for c in cols]
 missing = [p for p in expected if not os.path.exists(os.path.join(DIST,p))]
 check(f"build: all {len(expected)} expected files exist", not missing, str(missing))
 actual = [os.path.relpath(os.path.join(dp,f),DIST) for dp,_,fs in os.walk(DIST) for f in fs if f != ".DS_Store"]
@@ -134,7 +134,7 @@ try:
     css = urllib.request.urlopen("http://127.0.0.1:8901/style.css").read().decode()
     check("e2e: stylesheet non-empty and served", len(css) > 2000)
     sm = urllib.request.urlopen("http://127.0.0.1:8901/sitemap.xml").read().decode()
-    check("e2e: sitemap lists all indexable pages", sm.count("<url>")==27+sum(1 for a in agents if a["status"]=="active")+len(routes)+len(cols))
+    check("e2e: sitemap lists all indexable pages", sm.count("<url>")==28+sum(1 for a in agents if a["status"]=="active")+len(routes)+len(cols))
 finally:
     srv.terminate()
 
