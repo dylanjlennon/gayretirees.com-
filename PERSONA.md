@@ -58,6 +58,17 @@ memorized "the menu is the hamburger icon."
 - **Health-first** — named competent care access decides everything (partially covered via
   `hiv_care`, not trans-specific — also a flagged gap)
 
+## 2026-09 positioning note
+
+Homepage headline moved from "Where do you actually want to grow old?" to "Your next
+chapter, your terms" — direction from Dylan: lead with choice/agency, not mortality, and
+target the self-directed 55+ relocator (accomplished, flexible, financially able to choose
+where to live) rather than framing retirement as decline. This sits in tension with the
+"budget-conscious, not wealthy" primary persona above — both segments likely exist in the
+real audience. Don't resolve this by quietly dropping the budget-conscious persona from
+future copy; it's still the majority case in the buyer archetypes below (stretch-the-pension,
+safety-first). Treat "your terms" as being about agency, not affluence.
+
 ## Open questions — refine together, don't guess at these alone
 
 - [ ] Single or partnered as the default assumed reader? Changes copy ("you and your spouse"

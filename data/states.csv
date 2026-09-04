@@ -1,24 +1,24 @@
-state_code,state_name,housing_law,pa_law,ltc_protections,income_tax,ss_taxed,estate_inheritance_tax,tax_note,law_src,law_asof
-CA,California,explicit,explicit,yes,graduated-high,no,none,High income tax; Prop 13 caps property tax growth,https://www.mapresearch.org/equality-maps/non_discrimination_laws,2026-08-28
-FL,Florida,none,none,no,none,no,none,No state income tax; homestead exemption; rising insurance costs,https://www.mapresearch.org/equality-maps/non_discrimination_laws,2026-08-28
-NC,North Carolina,none,none,no,flat-low,no,none,"Flat 3.99% income tax (2026, down from 4.5%); SS exempt; local NDOs in some cities",https://www.mapresearch.org/equality-maps/non_discrimination_laws,2026-08-30
-DE,Delaware,explicit,explicit,VERIFY,graduated-mid,no,none,No sales tax; among lowest property taxes in US; SS exempt,https://www.mapresearch.org/equality-maps/profile_state/DE,2026-08-28
-AZ,Arizona,none,none,no,flat-low,no,none,Flat 2.5% income tax; SS exempt; local NDOs in Tucson & Phoenix,https://mapresearch.org/equality-profiles/az/,2026-08-30
-NM,New Mexico,explicit,explicit,VERIFY,graduated-mid,partial,none,SS exempt below income thresholds; low property taxes,https://codes.findlaw.com/nm/chapter-28-human-rights/nm-st-sect-28-1-7/,2026-08-30
-NV,Nevada,explicit,explicit,no,none,no,none,No state income tax,https://www.mapresearch.org/equality-maps/non_discrimination_laws,2026-08-28
-CO,Colorado,explicit,explicit,no,flat-mid,partial,none,Flat 4.40% income tax; large 65+ SS/pension deduction,https://www.mapresearch.org/equality-maps/non_discrimination_laws,2026-08-28
-OR,Oregon,explicit,explicit,yes,graduated-high,no,estate,No sales tax; estate tax kicks in at ~$1M,https://www.mapresearch.org/equality-maps/non_discrimination_laws,2026-08-28
-TX,Texas,none,none,no,none,no,none,No state income tax; high property taxes; senior freeze available,https://equalitytexas.org/our-issues/nondiscrimination/,2026-08-30
-GA,Georgia,none,none,no,flat-mid,no,none,"Retirement income exclusion up to $65,000/person at 65+ ($35,000 at 62-64); Social Security fully exempt",https://www.mapresearch.org/equality-maps/non_discrimination_laws,2026-08-28
-MA,Massachusetts,explicit,explicit,yes,flat-mid,no,estate,Estate tax above $2M; strong senior services,https://www.mapresearch.org/equality-maps/profile_state/MA,2026-08-28
-ME,Maine,explicit,explicit,VERIFY,graduated-mid,no,estate,Pension deduction; estate tax above ~$7M,https://www.mapresearch.org/equality-maps/profile_state/ME,2026-08-28
-PA,Pennsylvania,interpreted,interpreted,no,flat-low,no,inheritance,Flat 3.07%; retirement income (SS/401k/pension) fully exempt; inheritance tax applies,https://www.mapresearch.org/equality-maps/profile_state/PA,2026-08-28
-MI,Michigan,explicit,explicit,VERIFY,flat-mid,no,none,"Flat 4.25% income tax (2026); retirement/pension income taxation phases out by birth year; SS exempt; no estate or inheritance tax",https://www.mapresearch.org/equality-maps/profile_state/MI,2026-08-30
-AR,Arkansas,none,none,no,flat-low,no,none,Low cost; no statewide SOGI protections; Eureka Springs has local ordinance,https://www.mapresearch.org/equality-maps/non_discrimination_laws,2026-08-30
-NY,New York,explicit,explicit,yes,graduated-high,no,estate,High income tax; estate tax; NYC adds local tax,https://www.mapresearch.org/equality-maps/profile_state/NY,2026-08-28
-NJ,New Jersey,explicit,explicit,yes,graduated-high,no,inheritance,High property taxes; inheritance tax applies to some heirs,https://www.mapresearch.org/equality-maps/profile_state/NJ,2026-08-28
-IL,Illinois,explicit,explicit,no,flat-mid,no,estate,Flat 4.95%; retirement income exempt from state tax; estate tax above ~$4M,https://www.mapresearch.org/equality-maps/profile_state/IL,2026-08-30
-OH,Ohio,none,none,no,flat-low,no,none,No statewide SOGI law; ordinances in Columbus/Cincinnati/Cleveland; modest income tax,https://www.mapresearch.org/equality-maps/profile_state/OH,2026-08-30
-DC,District of Columbia,explicit,explicit,yes,graduated-high,no,estate,High income tax; estate tax; strong legal protections,https://www.mapresearch.org/equality-maps/profile_state/DC,2026-08-30
-TN,Tennessee,none,none,no,none,no,none,No state income tax,https://www.mapresearch.org/equality-maps/non_discrimination_laws,2026-08-30
-SC,South Carolina,none,none,no,graduated-mid,no,none,Large senior income deductions; SS exempt,https://www.mapresearch.org/equality-maps/non_discrimination_laws,2026-08-30
+state_code,state_name,housing_law,pa_law,ltc_protections,income_tax,ss_taxed,estate_inheritance_tax,tax_note,law_src,law_asof,ltc_src,ltc_asof
+CA,California,explicit,explicit,yes,graduated-high,no,none,High income tax; Prop 13 caps property tax growth,https://www.mapresearch.org/equality-maps/non_discrimination_laws,2026-08-28,,
+FL,Florida,none,none,no,none,no,none,No state income tax; homestead exemption; rising insurance costs,https://www.mapresearch.org/equality-maps/non_discrimination_laws,2026-08-28,,
+NC,North Carolina,none,none,no,flat-low,no,none,"Flat 3.99% income tax (2026, down from 4.5%); SS exempt; local NDOs in some cities",https://www.mapresearch.org/equality-maps/non_discrimination_laws,2026-08-30,,
+DE,Delaware,explicit,explicit,yes,graduated-mid,no,none,No sales tax; among lowest property taxes in US; SS exempt,https://www.mapresearch.org/equality-maps/profile_state/DE,2026-08-28,https://delcode.delaware.gov/title16/c011/sc02/index.html,2026-09-02
+AZ,Arizona,none,none,no,flat-low,no,none,Flat 2.5% income tax; SS exempt; local NDOs in Tucson & Phoenix,https://mapresearch.org/equality-profiles/az/,2026-08-30,,
+NM,New Mexico,explicit,explicit,no,graduated-mid,partial,none,SS exempt below income thresholds; low property taxes,https://codes.findlaw.com/nm/chapter-28-human-rights/nm-st-sect-28-1-7/,2026-08-30,https://www.aging.nm.gov/ombudsman/program-and-services/,2026-09-02
+NV,Nevada,explicit,explicit,no,none,no,none,No state income tax,https://www.mapresearch.org/equality-maps/non_discrimination_laws,2026-08-28,,
+CO,Colorado,explicit,explicit,no,flat-mid,partial,none,Flat 4.40% income tax; large 65+ SS/pension deduction,https://www.mapresearch.org/equality-maps/non_discrimination_laws,2026-08-28,,
+OR,Oregon,explicit,explicit,yes,graduated-high,no,estate,No sales tax; estate tax kicks in at ~$1M,https://www.mapresearch.org/equality-maps/non_discrimination_laws,2026-08-28,,
+TX,Texas,none,none,no,none,no,none,No state income tax; high property taxes; senior freeze available,https://equalitytexas.org/our-issues/nondiscrimination/,2026-08-30,,
+GA,Georgia,none,none,no,flat-mid,no,none,"Retirement income exclusion up to $65,000/person at 65+ ($35,000 at 62-64); Social Security fully exempt",https://www.mapresearch.org/equality-maps/non_discrimination_laws,2026-08-28,,
+MA,Massachusetts,explicit,explicit,yes,flat-mid,no,estate,Estate tax above $2M; strong senior services,https://www.mapresearch.org/equality-maps/profile_state/MA,2026-08-28,,
+ME,Maine,explicit,explicit,no,graduated-mid,no,estate,Pension deduction; estate tax above ~$7M,https://www.mapresearch.org/equality-maps/profile_state/ME,2026-08-28,https://www.maineombudsman.org/services/residents/residents-rights.aspx,2026-09-02
+PA,Pennsylvania,interpreted,interpreted,no,flat-low,no,inheritance,Flat 3.07%; retirement income (SS/401k/pension) fully exempt; inheritance tax applies,https://www.mapresearch.org/equality-maps/profile_state/PA,2026-08-28,,
+MI,Michigan,explicit,explicit,yes,flat-mid,no,none,Flat 4.25% income tax (2026); retirement/pension income taxation phases out by birth year; SS exempt; no estate or inheritance tax,https://www.mapresearch.org/equality-maps/profile_state/MI,2026-08-30,https://www.legislature.mi.gov/Laws/MCL?objectName=mcl-333-20201,2026-09-02
+AR,Arkansas,none,none,no,flat-low,no,none,Low cost; no statewide SOGI protections; Eureka Springs has local ordinance,https://www.mapresearch.org/equality-maps/non_discrimination_laws,2026-08-30,,
+NY,New York,explicit,explicit,yes,graduated-high,no,estate,High income tax; estate tax; NYC adds local tax,https://www.mapresearch.org/equality-maps/profile_state/NY,2026-08-28,,
+NJ,New Jersey,explicit,explicit,yes,graduated-high,no,inheritance,High property taxes; inheritance tax applies to some heirs,https://www.mapresearch.org/equality-maps/profile_state/NJ,2026-08-28,,
+IL,Illinois,explicit,explicit,no,flat-mid,no,estate,Flat 4.95%; retirement income exempt from state tax; estate tax above ~$4M,https://www.mapresearch.org/equality-maps/profile_state/IL,2026-08-30,,
+OH,Ohio,none,none,no,flat-low,no,none,No statewide SOGI law; ordinances in Columbus/Cincinnati/Cleveland; modest income tax,https://www.mapresearch.org/equality-maps/profile_state/OH,2026-08-30,,
+DC,District of Columbia,explicit,explicit,yes,graduated-high,no,estate,High income tax; estate tax; strong legal protections,https://www.mapresearch.org/equality-maps/profile_state/DC,2026-08-30,,
+TN,Tennessee,none,none,no,none,no,none,No state income tax,https://www.mapresearch.org/equality-maps/non_discrimination_laws,2026-08-30,,
+SC,South Carolina,none,none,no,graduated-mid,no,none,Large senior income deductions; SS exempt,https://www.mapresearch.org/equality-maps/non_discrimination_laws,2026-08-30,,

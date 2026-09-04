@@ -26,6 +26,8 @@ check("data: lifestyle_tags use known vocabulary only", all(
 check("data: every legal row has src+asof", all(s["law_src"].startswith("http") and s["law_asof"] for s in states.values()))
 check("data: every published city has sourced price", all(c["price_src"].startswith("http") and "VERIFY" not in c["price_asof"] for c in cities if c["status"]=="published"))
 check("data: prices are integers", all(c["median_price_usd"].isdigit() for c in cities))
+check("data: any city with a hero image has alt text (a11y)", all(
+    bool(c.get("hero_image_alt","").strip()) for c in cities if c.get("hero_image_url","").strip()))
 
 # ---------- 2. Build outputs ----------
 agents = list(csv.DictReader(open("data/agents.csv")))
@@ -59,7 +61,7 @@ for pth in expected:
     if not p.title: no_title.append(pth)
     base = os.path.dirname(os.path.join(DIST, pth))
     for href in p.links:
-        if href.startswith(("http","mailto","tel:","#")): continue
+        if href.startswith(("http","mailto","tel:","#","data:")): continue
         href = href.split("?")[0].split("#")[0]
         if not href: continue
         target = os.path.normpath(os.path.join(base, href))
@@ -73,7 +75,7 @@ intake = [f for f in cp.forms if any(i.get("name")=="form-name" and i.get("value
 check("form: intake form present with data-netlify", any("data-netlify" in f for f in cp.forms))
 check("form: hidden form-name field (required by Netlify)", any(i.get("name")=="form-name" and i.get("value")=="relocation-intake" for i in cp.inputs))
 check("form: honeypot configured", any(f.get("netlify-honeypot")=="bot-field" for f in cp.forms) and any(i.get("name")=="bot-field" for i in cp.inputs))
-check("form: posts to existing thanks page", any(f.get("action")=="thanks.html" for f in cp.forms) and os.path.exists(os.path.join(DIST,"thanks.html")))
+check("form: posts to existing thanks page", any(f.get("action","").startswith("thanks.html") for f in cp.forms) and os.path.exists(os.path.join(DIST,"thanks.html")))
 check("form: markets are client-selected checkboxes (steering guardrail)", sum(1 for i in cp.inputs if i.get("name")=="markets")==24)
 check("form: required fields marked", any(i.get("name")=="name" and "required" in i for i in cp.inputs) and any(i.get("name")=="email" and "required" in i for i in cp.inputs))
 labeled = all(i.get("id") in cp.labels for i in cp.inputs if i.get("id") and i.get("type")!="hidden")
