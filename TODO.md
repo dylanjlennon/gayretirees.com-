@@ -65,8 +65,7 @@ In order:
       to thanks.html) and every tracked click (`data-ga`/`data-ga-*` attrs) —
       phone CTA, agent email/phone links, agent card clicks, region filter,
       table sort. 12 dedicated tests in tests.py assert 100% page/form
-      coverage. Still using placeholder ID `G-XXXXXXXXXX` (build.py `GA_ID`).
-- [ ] Create the real GA4 property at analytics.google.com, then either
-      hardcode the Measurement ID in build.py's `GA_ID` or set it as a
-      `GA_MEASUREMENT_ID` Netlify env var (overrides the placeholder at
-      build time) — until then no traffic is actually being recorded
+      coverage.
+- [x] Real GA4 property created 2026-09-04, Measurement ID `G-HMVXKSHKN9`
+      hardcoded as the default in build.py's `GA_ID` (still overridable via
+      the `GA_MEASUREMENT_ID` Netlify env var if the property ever changes).

@@ -15,9 +15,9 @@ FAVICON = ('<link rel="icon" href="data:image/svg+xml,'
     '%3Cpath d=\'M26 78a24 24 0 0 1 48 0\' fill=\'none\' stroke=\'%23CE3A29\' stroke-width=\'11\'/%3E'
     '%3Ccircle cx=\'50\' cy=\'78\' r=\'9\' fill=\'%23F2B33E\'/%3E%3C/svg%3E">')
 
-# Placeholder until a real GA4 property exists — see TODO.md. Override at
-# build time with the GA_MEASUREMENT_ID env var (e.g. set on Netlify).
-GA_ID = os.environ.get("GA_MEASUREMENT_ID", "G-XXXXXXXXXX")
+# Real GA4 property, created 2026-09-04. Override at build time with the
+# GA_MEASUREMENT_ID env var (e.g. a different value set on Netlify) if needed.
+GA_ID = os.environ.get("GA_MEASUREMENT_ID", "G-HMVXKSHKN9")
 GA_SNIPPET = ('<script async src="https://www.googletagmanager.com/gtag/js?id=' + GA_ID + '"></script>'
     '<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}'
     'gtag("js",new Date());gtag("config","' + GA_ID + '");</script>')
