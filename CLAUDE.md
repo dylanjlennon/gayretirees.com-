@@ -26,9 +26,17 @@ These rules are permanent. Follow them on every change, no exceptions.
 - Pages render a DRAFT stamp until their row is `status=published`.
 - Do not flip `status` to `published` without a verified-data pass.
 
-## Human-only content
-- Any `dylan_note` field is human-written only. Never generate, draft, or
-  placeholder that content. A missing note means the block simply doesn't render.
+## Editorial voice content
+- City pages carry an `editorial_note` field (the "straight talk" section), written in the
+  site's defined house voice — see `VOICE.md`. Decision 2026-09-11: this is an unnamed
+  editorial voice, not a person — never give it a byline, name, or bio implying a specific
+  real (or fictional) individual wrote it. That kind of implied-but-fake authenticity is a
+  named trust risk for this audience per `PERSONA.md`.
+- Because it isn't attributed to any specific human, `editorial_note` may be drafted by
+  Claude, following `VOICE.md`. It must never invent specific unsourced facts or anecdotes —
+  judgment calls only, about facts already sourced elsewhere on the row.
+- Agent bios (`agents.csv` `blurb`/`testimonial`) are a different thing entirely — those are a
+  real named professional's own words and stay human-written only.
 
 ## Analytics & event tracking
 - Every page ships the GA4 snippet (`GA_SNIPPET`) and every form/tracked link

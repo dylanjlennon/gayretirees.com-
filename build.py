@@ -410,8 +410,8 @@ for c in cities:
 {{draft_note}}
 <a class="cta" href="../connect.html">Considering {e(c['city_label'].split(',')[0].split(' &')[0])}? Talk to us →</a>
 </div></div>"""
-    if c.get("dylan_note"):
-        straight_talk = f'<h2>The straight talk</h2><p>{e(c["dylan_note"])}</p>'
+    if c.get("editorial_note"):
+        straight_talk = f'<h2>The straight talk</h2><p>{e(c["editorial_note"])}</p>'
     else:
         straight_talk = ""
     body = body.replace("{straight_talk}", straight_talk)
