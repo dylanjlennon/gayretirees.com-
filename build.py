@@ -1,11 +1,19 @@
 #!/usr/bin/env python3
 """Static site generator: reads data/*.csv, writes dist/. No dependencies."""
-import csv, html, os, shutil
+import csv, html, json, os, shutil
+from datetime import date
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 DIST = os.path.join(ROOT, "dist")
 e = html.escape
 SITE_URL = os.environ.get("SITE_URL", "https://gayretirees.com")  # set to https://yourdomain.com at deploy for absolute canonical/sitemap URLs
+BUILD_DATE = date.today().isoformat()
+
+def clean(val):
+    """Drops obvious data-entry placeholders (REPLACE/VERIFY) so they never leak into public schema/markup."""
+    if not val or "REPLACE" in val or "VERIFY" in val:
+        return ""
+    return val
 
 # Simple rainbow-arc favicon, inline so the build stays dependency-free (no binary asset to keep in sync).
 FAVICON = ('<link rel="icon" href="data:image/svg+xml,'
@@ -311,11 +319,15 @@ for slug in QUICK_FILTERS:
     n = collection_counts.get(slug, 0)
     quick_pills += f"""<a class="pill" href="best/{slug}.html" data-ga="quicklist_click" data-ga-label="{e(slug)}">{e(col['title'])} · {n}</a>"""
 
+latest_reviewed = max((c["last_reviewed"] for c in cities if c["last_reviewed"]), default="")
+unpublished = any(c["status"] != "published" for c in cities)
+index_stamp = (f"Data status: {'partially published' if unpublished else 'published'} "
+    f"· last reviewed {e(latest_reviewed)} · legal data via Movement Advancement Project")
 index_body = f"""<div class="hero"><div class="arc" aria-hidden="true"></div><div class="wrap">
 <div class="kicker">For people who get to choose</div>
 <h1>Your next chapter, your terms.</h1>
 <p>You've spent a career deciding things — this one's no different. Twenty-three places LGBTQ+ people are actually choosing for retirement, laid out by the lifestyle you're designing: walkable and social, beach-town slow, mountain quiet, big-city amenities. Start with the life you want below, or skip straight to the full comparison table. Every fact is sourced and dated either way.</p>
-<span class="stamp">Data status: DRAFT · last reviewed Aug 2026 · legal data via Movement Advancement Project</span>
+<span class="stamp">{index_stamp}</span>
 </div></div>
 <section class="tier wrap" id="browse"><div class="kicker">Start here</div><h2>What's the vibe you're picturing?</h2>
 <div class="cards lifestyle">{lifestyle_cards}</div>
@@ -428,8 +440,17 @@ for c in cities:
     else:
         agent_block = f'<h2>Your person here</h2><p>We\'re choosing our partner agent for this market now. Want an introduction the day it happens — or are you the agent? <a href="../connect.html">Raise your hand.</a></p>'
     body = body.replace("{agent_block}", agent_block)
+    place_jsonld = ('<script type="application/ld+json">' + json.dumps({
+        "@context": "https://schema.org",
+        "@type": "Place",
+        "name": c["city_label"],
+        "description": c["one_liner"],
+        "url": f"{SITE_URL}/city/{c['slug']}.html",
+        "address": {"@type": "PostalAddress", "addressRegion": c["state_code"], "addressCountry": "US"},
+    }) + '</script>')
+    body += place_jsonld
     with open(os.path.join(DIST, "city", c["slug"] + ".html"), "w") as f:
-        f.write(page(c["city_label"] + " — LGBTQ+ Retirement Guide", body, f"city/{c['slug']}.html", depth=1, desc=c["one_liner"], image=c.get("hero_image_url","")))
+        f.write(page(c["city_label"] + " — LGBTQ+ Retirement", body, f"city/{c['slug']}.html", depth=1, desc=c["one_liner"], image=c.get("hero_image_url","")))
 
 # ---------- states page ----------
 srows = "".join(f"""<tr><td>{e(s['state_name'])}</td><td>{lawbadge(s['housing_law'])}</td>
@@ -439,7 +460,7 @@ srows = "".join(f"""<tr><td>{e(s['state_name'])}</td><td>{lawbadge(s['housing_la
 states_body = f"""<div class="hero"><div class="wrap"><div class="kicker">Reference</div>
 <h1>State law &amp; tax, side by side</h1>
 <p>Every state that appears in the index. Legal columns follow the Movement Advancement Project's classification: explicit statute, commission interpretation, or no statewide law. Federal enforcement is currently unsettled — state and local law is what you can rely on.</p>
-<span class="stamp">Legal data via lgbtmap.org · reviewed Aug 2026 · VERIFY before publishing</span></div></div>
+<span class="stamp">Legal data via lgbtmap.org · reviewed {e(max((s["law_asof"] for s in states.values() if s.get("law_asof")), default=""))}</span></div></div>
 <div class="wrap"><div class="tblwrap"><table><thead><tr><th>State</th><th>Housing</th><th>Public accomm.</th><th>LTC protections</th><th>Income tax</th><th>Estate/inherit.</th><th>Notes</th></tr></thead><tbody>{srows}</tbody></table></div></div>"""
 
 # ---------- methodology ----------
@@ -568,6 +589,19 @@ for a in agents:
 <p>Every inquiry comes through us first, so we can make a warm introduction and keep the referral on record — that's what keeps {e(a['name'].split()[0])}'s placement here free of bidding wars.</p>
 <a class="cta" rel="sponsored" href="../connect.html?agent={a['slug']}" data-ga="agent_intro_click" data-ga-label="agent:{e(a['slug'])}">Get introduced to {e(a['name'].split()[0])} →</a>
 </div></div>"""
+    agent_ld = {
+        "@context": "https://schema.org",
+        "@type": "RealEstateAgent",
+        "name": a["name"],
+        "description": a["blurb"],
+        "url": f"{SITE_URL}/agents/{a['slug']}.html",
+        "worksFor": {"@type": "Organization", "name": a["brokerage"]},
+        "areaServed": [m["city_label"] for m in mk],
+    }
+    if clean(a.get("phone", "")): agent_ld["telephone"] = clean(a["phone"])
+    if clean(a.get("license", "")): agent_ld["hasCredential"] = clean(a["license"])
+    if a.get("headshot_url"): agent_ld["image"] = a["headshot_url"]
+    ab += '<script type="application/ld+json">' + json.dumps(agent_ld) + '</script>'
     with open(os.path.join(DIST, "agents", a["slug"] + ".html"), "w") as f:
         f.write(page(a["name"] + " — Partner Agent — GayRetirees.com", ab, f"agents/{a['slug']}.html", depth=1, desc=a["blurb"][:150], image=a.get("headshot_url","")))
 
@@ -636,10 +670,18 @@ nf_body = """<div class="hero"><div class="wrap"><div class="kicker">404</div>
 <h1>That page doesn't exist.</h1><p>The <a href="index.html">full index</a> has every city we cover.</p></div></div>"""
 with open(os.path.join(DIST, "thanks.html"), "w") as f: f.write(page("Thanks — GayRetirees.com", thanks_body, "thanks.html", desc="Thanks for reaching out to GayRetirees.com.", noindex=True))
 with open(os.path.join(DIST, "404.html"), "w") as f: f.write(page("Not found — GayRetirees.com", nf_body, "404.html", desc="That page doesn't exist on GayRetirees.com.", noindex=True))
-pages = ["index.html","states.html","methodology.html","connect.html","agent-signup.html"] + [f"city/{c['slug']}.html" for c in cities] + [f"agents/{a['slug']}.html" for a in agents if a["status"]=="active"] + [f"moving/{r['route_slug']}.html" for r in routes] + [f"best/{c['slug']}.html" for c in collections]
+sitemap_entries = (
+    [("index.html", BUILD_DATE, "1.0"), ("states.html", BUILD_DATE, "0.5"), ("methodology.html", BUILD_DATE, "0.3"),
+     ("connect.html", BUILD_DATE, "0.6"), ("agent-signup.html", BUILD_DATE, "0.3")]
+    + [(f"city/{c['slug']}.html", c["last_reviewed"] or BUILD_DATE, "0.9") for c in cities]
+    + [(f"agents/{a['slug']}.html", BUILD_DATE, "0.5") for a in agents if a["status"] == "active"]
+    + [(f"moving/{r['route_slug']}.html", BUILD_DATE, "0.7") for r in routes]
+    + [(f"best/{c['slug']}.html", BUILD_DATE, "0.7") for c in collections]
+)
+pages = [u for u, _, _ in sitemap_entries]
 with open(os.path.join(DIST, "sitemap.xml"), "w") as f:
     f.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
-            "".join(f"<url><loc>{SITE_URL}/{u}</loc></url>\n" for u in pages) + "</urlset>")
+            "".join(f"<url><loc>{SITE_URL}/{u}</loc><lastmod>{d}</lastmod><priority>{p}</priority></url>\n" for u, d, p in sitemap_entries) + "</urlset>")
 with open(os.path.join(DIST, "robots.txt"), "w") as f:
     f.write(f"User-agent: *\nAllow: /\nSitemap: {SITE_URL}/sitemap.xml\n")
 with open(os.path.join(ROOT, "netlify.toml"), "w") as f:
