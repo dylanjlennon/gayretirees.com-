@@ -20,6 +20,8 @@
 
 ### Notes
 
+- 2026-09-20 second research wave (gap-fill) merged: +18 places, +5 events, +4 news, 3 mayors, ordinance statuses where a real code backs them. Still open after it: 12 LGBTQ districts, 6 local ordinance statuses, 3 Pride events, most mayor parties, thin place lists (Tucson, Santa Fe, Eureka Springs, New Hope, Savannah, Sarasota), and unsourced `senior_lgbtq_asset` / `hiv_care` fields.
+- Copy corrections made from research: removed unverifiable "first"/ranking claims and internal jargon from one-liners/notes; `tests.py` now guards against them.
 - 2026-09-20: first research pass covered 23 cities; a gap-fill wave targets remaining `VERIFY` fields (districts, ordinance status, mayors' parties, thin place lists). Re-ingest is idempotent. Stamp wording is "As of <Mon Year>" (the source's data date), not "Verified".
 - Loop for every change: edit CSV or `build.py` → `python3 build.py` → `python3 tests.py`. Never hand-edit `dist/`.
 - Research rule: every fact needs a source URL and an as-of date; unknown = blank + `VERIFY`. No guessing.
@@ -76,9 +78,9 @@
   - [x] 5.5 Add "Compare with…" links from city pages to their comparison pages (with `data-ga`).
   - [x] 5.6 Tests: every `compare.csv` pair renders, both cities are published, no superlative wording, GA attributes present. Build + tests; commit.
 - [ ] 6.0 Freshness automation and launch verification
-  - [ ] 6.1 Make sitemap `lastmod` use the newest data date for each page rather than the build date.
+  - [x] 6.1 Make sitemap `lastmod` use the newest data date for each page rather than the build date.
   - [ ] 6.2 Weekly rebuild: with Dylan's go-ahead, create a Netlify build hook (CLI or dashboard); Dylan adds it as a GitHub secret; write `.github/workflows/weekly-rebuild.yml` with a weekly cron.
-  - [ ] 6.3 Extend the `ga:` tests to cover every new link and CTA.
+  - [x] 6.3 Extend the `ga:` tests to cover every new link and CTA.
   - [ ] 6.4 Ask Dylan, then push to `origin/main`; confirm the Netlify deploy is READY.
   - [ ] 6.5 Verify the live site in Chrome: new sections render, stamps and source links work, comparison pages load, GA4 events fire.
   - [ ] 6.6 Capture a GA4 engagement baseline (Dylan supplies numbers or access), refresh `TODO.md` / `ROADMAP.md`, run the full suite; final commit.

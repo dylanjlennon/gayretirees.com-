@@ -325,6 +325,18 @@ check("feed: state updates appear on that state's city pages", all(
       html.escape(u["headline"]) in _html(c) for u in updates if u["scope"] == "state" for c in cities if c["state_code"] == u["slug"]
       if sum(1 for x in updates if x["scope"] == "state" and x["slug"] == u["slug"]) <= 5))
 
+# sitemap lastmod reflects data dates, not the build date
+_lm = dict(re.findall(r"<loc>https?://[^/]+/([^<]+)</loc>(?:<lastmod>([^<]*)</lastmod>)?", _sm))
+check("sitemap: every lastmod is an ISO date and never in the future", all((not v) or (parse_asof(v) and parse_asof(v) <= TODAY) for v in _lm.values()))
+check("sitemap: city lastmod is at least the city's last_reviewed date", all(_lm.get(f"city/{c['slug']}.html", "") >= c["last_reviewed"] for c in cities))
+check("sitemap: pages with no dated data omit lastmod instead of using the build date", all(_lm.get(p, "x") == "" for p in ("methodology.html", "connect.html", "agent-signup.html")))
+
+# copy hygiene (CLAUDE.md: no unsourced rankings/superlatives; keep agent-side jargon off public pages)
+_CLAIMS = re.compile(r"second-gayest|america's first|country's first|first [a-z\- ]+ in (arkansas|the )|lowest price|the most (expensive|affordable) (place|option)\b|total acceptance|referral|workhorse|transaction volume", re.I)
+check("copy: no unsourced 'first'/ranking claims or agent-side jargon in one-liners and editorial notes",
+      not [c["slug"] for c in cities if _CLAIMS.search(c["one_liner"] + " " + c["editorial_note"])],
+      ", ".join(c["slug"] for c in cities if _CLAIMS.search(c["one_liner"] + " " + c["editorial_note"])))
+
 # Freshness (advisory only): laws/politics 180d, news 90d, everything else 365d.
 TODAY = datetime.date.today()
 def stale(v, days):

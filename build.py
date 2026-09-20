@@ -617,6 +617,7 @@ for c in cities:
     else:
         hero_img = ""
     ndo_sentence = f" Local ordinance status: {e(c['local_ndo'])} (see source in the sidebar)." if verified(c["local_ndo"], c["local_ndo_src"], c["local_ndo_asof"]) else ""
+    senior_sentence = f"{e(c['senior_lgbtq_asset'])}. " if c["senior_lgbtq_asset"].strip() else ""
     org_sentence = f"Anchor institution: {e(c['community_org'])}. " if verified(c["community_org"], c["community_org_src"], c["community_org_asof"]) else ""
     living = []
     if temps_ok and verified(c["climate"], c["climate_src"], c["climate_asof"]):
@@ -643,7 +644,7 @@ for c in cities:
 <h2>The legal picture</h2>
 <p>{e(c['city_label'].split(',')[0])} sits in {e(s['state_name'])}: {lawbadge(s['housing_law'])} for housing and {lawbadge(s['pa_law'])} for public accommodations. {e(s['tax_note'])}.{ndo_sentence} Verify current status via the Movement Advancement Project before relying on it — state law is moving.</p>
 <h2>Community &amp; healthcare</h2>
-<p>{org_sentence}{e(c['senior_lgbtq_asset'])}. HIV/LGBTQ-competent care: {e(c['hiv_care'])}.</p>
+<p>{org_sentence}{senior_sentence}HIV/LGBTQ-competent care: {e(c['hiv_care'])}.</p>
 <h2>Climate &amp; getting there</h2>
 {living_block}
 {politics_html}
@@ -921,19 +922,36 @@ nf_body = """<div class="hero"><div class="wrap"><div class="kicker">404</div>
 <h1>That page doesn't exist.</h1><p>The <a href="index.html">full index</a> has every city we cover.</p></div></div>"""
 with open(os.path.join(DIST, "thanks.html"), "w") as f: f.write(page("Thanks — GayRetirees.com", thanks_body, "thanks.html", desc="Thanks for reaching out to GayRetirees.com.", noindex=True))
 with open(os.path.join(DIST, "404.html"), "w") as f: f.write(page("Not found — GayRetirees.com", nf_body, "404.html", desc="That page doesn't exist on GayRetirees.com.", noindex=True))
+# lastmod comes from the newest real data date behind each page — never the build date, which changes weekly with no content change.
+def iso_day(v):
+    m = re.fullmatch(r"(\d{4})-(\d{2})(?:-(\d{2}))?", (v or "").strip())
+    if not m or not 1 <= int(m[2]) <= 12: return ""
+    return f"{m[1]}-{m[2]}-{m[3] or '01'}"
+def newest(*vals):
+    days = [iso_day(v) for v in vals if iso_day(v)]
+    return max(days) if days else ""
+def city_lastmod(c):
+    vals = [c["last_reviewed"], c["price_asof"]] + [c[k] for k in c if k.endswith("_asof")]
+    vals += [p["asof"] for p in politics if (p["scope"] == "city" and p["slug_or_code"] == c["slug"]) or (p["scope"] == "state" and p["slug_or_code"] == c["state_code"])]
+    vals += [p["verified_asof"] for p in places if p["city_slug"] == c["slug"]] + [x["verified_asof"] for x in events if x["city_slug"] == c["slug"]]
+    vals += [n["date"] for n in news if n["city_slug"] == c["slug"]]
+    vals += [u["date"] for u in updates if (u["scope"] == "city" and u["slug"] == c["slug"]) or (u["scope"] == "state" and u["slug"] == c["state_code"])]
+    return newest(*vals)
+def entry(path, lastmod, prio): return (path, lastmod, prio)
 sitemap_entries = (
-    [("index.html", BUILD_DATE, "1.0"), ("states.html", BUILD_DATE, "0.5"), ("methodology.html", BUILD_DATE, "0.3"),
-     ("connect.html", BUILD_DATE, "0.6"), ("agent-signup.html", BUILD_DATE, "0.3")]
-    + [(f"city/{c['slug']}.html", c["last_reviewed"] or BUILD_DATE, "0.9") for c in cities]
-    + [(f"agents/{a['slug']}.html", BUILD_DATE, "0.5") for a in agents if a["status"] == "active"]
-    + [(f"moving/{r['route_slug']}.html", BUILD_DATE, "0.7") for r in routes]
-    + [(f"best/{c['slug']}.html", BUILD_DATE, "0.7") for c in collections]
-    + [(f"compare/{r['slug_a']}-vs-{r['slug_b']}.html", max(city_by_slug[r['slug_a']]['last_reviewed'], city_by_slug[r['slug_b']]['last_reviewed']) or BUILD_DATE, "0.6") for r in compare]
+    [entry("index.html", newest(*[city_lastmod(c) for c in cities], *[u["date"] for u in updates]), "1.0"),
+     entry("states.html", newest(*[st["law_asof"] for st in states.values()], *[st["ltc_asof"] for st in states.values()]), "0.5"),
+     entry("methodology.html", "", "0.3"), entry("connect.html", "", "0.6"), entry("agent-signup.html", "", "0.3")]
+    + [entry(f"city/{c['slug']}.html", city_lastmod(c), "0.9") for c in cities]
+    + [entry(f"agents/{a['slug']}.html", newest(a.get("since", "")), "0.5") for a in agents if a["status"] == "active"]
+    + [entry(f"moving/{r['route_slug']}.html", city_lastmod(city_by_slug[r["to_slug"]]) if r.get("to_slug") in city_by_slug else "", "0.7") for r in routes]
+    + [entry(f"best/{col['slug']}.html", newest(*[city_lastmod(c) for c in cities if matches(c, col["rule"])]), "0.7") for col in collections]
+    + [entry(f"compare/{r['slug_a']}-vs-{r['slug_b']}.html", newest(city_lastmod(city_by_slug[r["slug_a"]]), city_lastmod(city_by_slug[r["slug_b"]])), "0.6") for r in compare]
 )
 pages = [u for u, _, _ in sitemap_entries]
 with open(os.path.join(DIST, "sitemap.xml"), "w") as f:
     f.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
-            "".join(f"<url><loc>{SITE_URL}/{u}</loc><lastmod>{d}</lastmod><priority>{p}</priority></url>\n" for u, d, p in sitemap_entries) + "</urlset>")
+            "".join(f"<url><loc>{SITE_URL}/{u}</loc>{f'<lastmod>{d}</lastmod>' if d else ''}<priority>{p}</priority></url>\n" for u, d, p in sitemap_entries) + "</urlset>")
 with open(os.path.join(DIST, "robots.txt"), "w") as f:
     f.write(f"User-agent: *\nAllow: /\nSitemap: {SITE_URL}/sitemap.xml\n")
 with open(os.path.join(ROOT, "netlify.toml"), "w") as f:
