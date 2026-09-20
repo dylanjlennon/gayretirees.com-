@@ -36,7 +36,7 @@ check("data: any city with a hero image has alt text (a11y)", all(
 agents = list(csv.DictReader(open("data/agents.csv")))
 routes = list(csv.DictReader(open("data/routes.csv")))
 cols = list(csv.DictReader(open("data/collections.csv")))
-expected = ["index.html","states.html","methodology.html","connect.html","agent-signup.html","agent-profile.html","thanks.html","404.html","style.css","analytics.js","sitemap.xml","robots.txt"] + [f"city/{c['slug']}.html" for c in cities] + [f"agents/{a['slug']}.html" for a in agents] + [f"moving/{r['route_slug']}.html" for r in routes] + [f"best/{c['slug']}.html" for c in cols]
+expected = ["index.html","states.html","methodology.html","connect.html","agent-signup.html","agent-profile.html","thanks.html","404.html","style.css","analytics.js","sitemap.xml","robots.txt"] + [f"city/{c['slug']}.html" for c in cities] + [f"agents/{a['slug']}.html" for a in agents] + [f"moving/{r['route_slug']}.html" for r in routes] + [f"best/{c['slug']}.html" for c in cols] + [f"compare/{r['slug_a']}-vs-{r['slug_b']}.html" for r in list(csv.DictReader(open("data/compare.csv")))]
 missing = [p for p in expected if not os.path.exists(os.path.join(DIST,p))]
 check(f"build: all {len(expected)} expected files exist", not missing, str(missing))
 actual = [os.path.relpath(os.path.join(dp,f),DIST) for dp,_,fs in os.walk(DIST) for f in fs if f != ".DS_Store"]
@@ -137,7 +137,7 @@ try:
     css = urllib.request.urlopen("http://127.0.0.1:8901/style.css").read().decode()
     check("e2e: stylesheet non-empty and served", len(css) > 2000)
     sm = urllib.request.urlopen("http://127.0.0.1:8901/sitemap.xml").read().decode()
-    check("e2e: sitemap lists all indexable pages", sm.count("<url>")==28+sum(1 for a in agents if a["status"]=="active")+len(routes)+len(cols))
+    check("e2e: sitemap lists all indexable pages", sm.count("<url>")==28+sum(1 for a in agents if a["status"]=="active")+len(routes)+len(cols)+len(list(csv.DictReader(open("data/compare.csv")))))
 finally:
     srv.terminate()
 
@@ -294,6 +294,36 @@ check("living: Pride module shows June events in June", "Pride events in June" i
 check("living: Pride module shows September events in September", "Pride events in September" in _sep and "Blue Ridge Pride" in _sep)
 check("living: Pride module falls forward to the next month that has events", "Coming up: Pride events in" in _dec)
 check("living: Pride module event links carry data-ga", 'data-ga="event_click"' in _jun)
+
+# comparison pages + feed
+_cmp_ok = True; _cmp_ga = []; _cmp_ban = []
+_BANW = re.compile(r"\b(best|largest|safest|top|leading|greatest|friendliest|#1)\b", re.I)
+cities_by_slug = {c["slug"]: c for c in cities}
+for r in compare:
+    f = os.path.join(DIST, "compare", f"{r['slug_a']}-vs-{r['slug_b']}.html")
+    if not os.path.exists(f): _cmp_ok = False; continue
+    h = open(f).read(); a, b = cities_by_slug[r["slug_a"]], cities_by_slug[r["slug_b"]]
+    _cmp_ok = _cmp_ok and a["status"] == "published" and b["status"] == "published" and a["city_label"].split(",")[0].split(" &")[0] in h
+    pa = _A(); pa.feed(h); _cmp_ga += pa.bad
+    if _BANW.search(re.sub(r"<[^>]+>", " ", h.split("</header>")[1])): _cmp_ban.append(f)
+check("compare: every curated pair renders with both cities published", _cmp_ok and len(compare) >= 20)
+check("compare: every pair shares a lifestyle tag", all(
+      {t.strip() for t in cities_by_slug[r["slug_a"]]["lifestyle_tags"].split(";")} & {t.strip() for t in cities_by_slug[r["slug_b"]]["lifestyle_tags"].split(";")} for r in compare))
+check("compare: no superlative wording on comparison pages", not _cmp_ban, ", ".join(_cmp_ban))
+check("ga: every outbound link on comparison pages carries data-ga", not _cmp_ga, ", ".join(_cmp_ga[:2]))
+_sm = open(os.path.join(DIST, "sitemap.xml")).read()
+check("compare: all comparison pages are in the sitemap", all(f"compare/{r['slug_a']}-vs-{r['slug_b']}.html" in _sm for r in compare))
+check("compare: every city in a pair links to its comparison page", all(
+      f"compare/{r['slug_a']}-vs-{r['slug_b']}.html" in _html(cities_by_slug[r["slug_a"]]) and f"compare/{r['slug_a']}-vs-{r['slug_b']}.html" in _html(cities_by_slug[r["slug_b"]]) for r in compare))
+check("feed: every update has a date, headline and http source", all(parse_asof(u["date"]) and u["headline"].strip() and is_url(u["source_url"]) for u in updates))
+_newest = max(updates, key=lambda u: u["date"]) if updates else None
+_idx = open(os.path.join(DIST, "index.html")).read()
+check("feed: homepage shows the newest update with its source link", bool(_newest) and html.escape(_newest["headline"]) in _idx and html.escape(_newest["source_url"].split(";")[0].strip()) in _idx)
+check("feed: city updates appear on that city's page", all(
+      html.escape(u["headline"]) in _html(c) for u in updates if u["scope"] == "city" for c in cities if c["slug"] == u["slug"]))
+check("feed: state updates appear on that state's city pages", all(
+      html.escape(u["headline"]) in _html(c) for u in updates if u["scope"] == "state" for c in cities if c["state_code"] == u["slug"]
+      if sum(1 for x in updates if x["scope"] == "state" and x["slug"] == u["slug"]) <= 5))
 
 # Freshness (advisory only): laws/politics 180d, news 90d, everything else 365d.
 TODAY = datetime.date.today()

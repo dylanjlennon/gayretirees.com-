@@ -68,13 +68,13 @@
   - [x] 4.6 Render the places, events, and news sections on city pages: outbound links with `rel="noopener"` and `data-ga` attributes, "last checked" stamps, older news aged out of view.
   - [x] 4.7 Homepage "Pride this month" module computed from the build month, falling back to the next upcoming month; deterministic in tests via a `BUILD_MONTH` override.
   - [x] 4.8 Tests: module output for fixed months; closed places never render; new links carry `data-ga`. Build + tests; commit.
-- [ ] 5.0 "What changed" feed and comparison pages
-  - [ ] 5.1 Seed `updates.csv` with real dated changes found during tasks 2–4 (each with a source URL).
-  - [ ] 5.2 Render the feed on the homepage and on each state/city page, newest first, limited length.
-  - [ ] 5.3 Choose ~20 city pairs by shared lifestyle tag and record them in `compare.csv`.
-  - [ ] 5.4 Build `/compare/<a>-vs-<b>.html` pages: side-by-side table from existing sourced fields, each row with its stamp, canonical URL, and sitemap entry.
-  - [ ] 5.5 Add "Compare with…" links from city pages to their comparison pages (with `data-ga`).
-  - [ ] 5.6 Tests: every `compare.csv` pair renders, both cities are published, no superlative wording, GA attributes present. Build + tests; commit.
+- [x] 5.0 "What changed" feed and comparison pages
+  - [x] 5.1 Seed `updates.csv` with real dated changes found during tasks 2–4 (each with a source URL).
+  - [x] 5.2 Render the feed on the homepage and on each state/city page, newest first, limited length.
+  - [x] 5.3 Choose ~20 city pairs by shared lifestyle tag and record them in `compare.csv`.
+  - [x] 5.4 Build `/compare/<a>-vs-<b>.html` pages: side-by-side table from existing sourced fields, each row with its stamp, canonical URL, and sitemap entry.
+  - [x] 5.5 Add "Compare with…" links from city pages to their comparison pages (with `data-ga`).
+  - [x] 5.6 Tests: every `compare.csv` pair renders, both cities are published, no superlative wording, GA attributes present. Build + tests; commit.
 - [ ] 6.0 Freshness automation and launch verification
   - [ ] 6.1 Make sitemap `lastmod` use the newest data date for each page rather than the build date.
   - [ ] 6.2 Weekly rebuild: with Dylan's go-ahead, create a Netlify build hook (CLI or dashboard); Dylan adds it as a GitHub secret; write `.github/workflows/weekly-rebuild.yml` with a weekly cron.

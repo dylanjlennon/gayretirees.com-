@@ -420,6 +420,61 @@ def pride_block():
                     '<p class="tblnote" style="margin-top:0">Month comes from each organizer\'s own page; exact dates change every year, so confirm with the organizer.</p></section>')
     return ""
 
+# ---------- "What changed" feed + city-vs-city comparisons ----------
+def feed_block(items, limit, heading="What changed", intro=""):
+    rows = []
+    for u in items:
+        try: d = date.fromisoformat(u["date"])
+        except ValueError: continue
+        if src_urls(u["source_url"]) and u["headline"].strip(): rows.append((d, u))
+    if not rows: return ""
+    rows.sort(key=lambda t: t[0], reverse=True)
+    li = "".join(f'<li><span class="muted">{long_date(u["date"])}</span> — {e(u["headline"])}'
+                 f' <a href="{e(src_urls(u["source_url"])[0])}" rel="noopener" data-ga="source_click" data-ga-label="feed">{e(host(src_urls(u["source_url"])[0]))}</a></li>' for d, u in rows[:limit])
+    return f'<section id="changes"><h2>{heading}</h2>{intro}<ul class="vlist">{li}</ul></section>'
+def city_feed(c):
+    mine = [u for u in updates if (u["scope"] == "city" and u["slug"] == c["slug"]) or (u["scope"] == "state" and u["slug"] == c["state_code"])]
+    return feed_block(mine, 5, "What changed here", '<p>Dated changes to laws, events and institutions affecting this place. Each links to its source.</p>')
+cmp_links = {}
+for r in compare:
+    cmp_links.setdefault(r["slug_a"], []).append(r["slug_b"]); cmp_links.setdefault(r["slug_b"], []).append(r["slug_a"])
+def cmp_slug(a, b):
+    for r in compare:
+        if {r["slug_a"], r["slug_b"]} == {a, b}: return f'{r["slug_a"]}-vs-{r["slug_b"]}'
+def compare_block(c):
+    others = [city_by_slug[o] for o in cmp_links.get(c["slug"], []) if o in city_by_slug]
+    if not others: return ""
+    li = "".join(f'<li><a href="../compare/{cmp_slug(c["slug"], o["slug"])}.html" data-ga="compare_click" data-ga-label="{e(c["slug"])}:{e(o["slug"])}">{e(city_short(c))} vs. {e(city_short(o))}</a></li>' for o in others)
+    return f'<section id="compare-with"><h2>Compare with…</h2><ul class="vlist">{li}</ul></section>'
+def src_link(label, src):
+    u = src_urls(src)
+    return f' <a href="{e(u[0])}" rel="noopener" style="font-size:.72rem" data-ga="source_click" data-ga-label="{e(label)}">(source)</a>' if u else ""
+def cmp_cell(value, src, label):
+    return f"{e(value)}{src_link(label, src)}" if value and "VERIFY" not in value else "—"
+def cmp_gov(c):
+    g = pol("state", c["state_code"], "governor")
+    if not g: return "—"
+    p = g[0]; name = p["value"].replace(" (Mayor of DC)", "")
+    return f"{e(name)} ({e(p['party'])})" if p["party"] in PARTIES else e(name)
+def cmp_rows(a, b):
+    def both(f): return f(a), f(b)
+    rows = [
+        ("Home price", *both(lambda c: f"${int(c['median_price_usd']):,}<br><small>{pm(c)['label']} ({pm(c)['source']})</small>")),
+        ("State housing law", *both(lambda c: lawbadge(states[c["state_code"]]["housing_law"]))),
+        ("Public accommodations", *both(lambda c: lawbadge(states[c["state_code"]]["pa_law"]))),
+        ("LTC protections", *both(lambda c: e(states[c["state_code"]]["ltc_protections"]))),
+        ("State income tax", *both(lambda c: e(states[c["state_code"]]["income_tax"].replace("-", " ")))),
+        ("Local ordinance", *both(lambda c: cmp_cell(c["local_ndo"], c["local_ndo_src"], "local_ndo"))),
+        ("Governor", *both(cmp_gov)),
+        ("Summer high / winter low", *both(lambda c: (f"{c['summer_high_f']}° / {c['winter_low_f']}°" + src_link("climate", c["climate_src"])) if c["summer_high_f"].isdigit() and c["winter_low_f"].isdigit() else "—")),
+        ("Airport", *both(lambda c: cmp_cell(c["airport"], c["airport_src"], "airport"))),
+        ("Pride", *both(lambda c: cmp_cell(c["pride_event"], c["pride_event_src"], "pride_event"))),
+        ("LGBTQ+ district", *both(lambda c: cmp_cell(c["lgbtq_district"], c["lgbtq_district_src"], "lgbtq_district"))),
+        ("Cost of living index (100 = US avg)", *both(lambda c: (e(c["cost_of_living_index"]) + src_link("coli", c["coli_src"])) if c.get("cost_of_living_index") else "—")),
+        ("Walk Score", *both(lambda c: (e(c["walkscore"]) + src_link("walkscore", c["walkscore_src"])) if c.get("walkscore") else "—")),
+    ]
+    return rows
+
 # ---------- index ----------
 n_sale = sum(1 for c in cities if c["price_metric"] == "median_sale")
 n_typ = sum(1 for c in cities if c["price_metric"] == "typical_value")
@@ -470,6 +525,7 @@ unpublished = any(c["status"] != "published" for c in cities)
 index_stamp = (f"Data status: {'partially published' if unpublished else 'published'} "
     f"· last reviewed {e(latest_reviewed)} · legal data via Movement Advancement Project")
 pride_html = pride_block()
+changes_html = ("<section class=\"tier wrap\">" + feed_block(updates, 6, "What changed lately", "<p>Real, dated changes we track across the places we cover. Each links to its source.</p>").replace("<section id=\"changes\">", "<div id=\"changes\">").replace("</section>", "</div>") + "</section>") if updates else ""
 index_body = f"""<div class="hero"><div class="arc" aria-hidden="true"></div><div class="wrap">
 <div class="kicker">For people who get to choose</div>
 <h1>Your next chapter, your terms.</h1>
@@ -483,7 +539,7 @@ index_body = f"""<div class="hero"><div class="arc" aria-hidden="true"></div><di
 <section class="tier wrap"><div class="kicker">Or filter by what's non-negotiable</div><h2>Quick filters</h2>
 <div class="controls">{quick_pills}</div>
 </section>
-{pride_html}
+{pride_html}{changes_html}
 <div class="wrap" style="padding:14px 0 36px;text-align:center;border-top:2px dashed var(--line)">
 <p style="font-size:1.05rem;font-weight:700;margin-bottom:12px">Have your own must-haves? Skip the browsing.</p>
 <a class="cta" href="connect.html" data-ga="cta_click" data-ga-label="mid_banner">Talk to a real person →</a>
@@ -575,6 +631,7 @@ for c in cities:
     living_block = "".join(living)
     politics_html = politics_block(c)
     places_html, events_html, news_html = places_block(c), events_block(c), news_block(c)
+    feed_html, compare_html = city_feed(c), compare_block(c)
     body = f"""<div class="cityhead"><div class="wrap">
 <div class="kicker">{e(c['region'])} · Tier {c['tier']}</div>
 <h1>{e(c['city_label'])}</h1><p style="max-width:60ch;margin-top:10px">{e(c['one_liner'])}</p>
@@ -590,7 +647,7 @@ for c in cities:
 <h2>Climate &amp; getting there</h2>
 {living_block}
 {politics_html}
-{places_html}{events_html}{news_html}
+{places_html}{events_html}{news_html}{feed_html}{compare_html}
 {{straight_talk}}
 {{agent_block}}
 {{draft_note}}
@@ -821,6 +878,26 @@ for col in collections:
     with open(os.path.join(DIST, "best", col["slug"] + ".html"), "w") as f:
         f.write(page(col["title"] + " — GayRetirees.com", cb, f"best/{col['slug']}.html", depth=1, desc=col["blurb"]))
 
+# ---------- comparison pages (curated pairs, built only from sourced fields) ----------
+os.makedirs(os.path.join(DIST, "compare"), exist_ok=True)
+for r in compare:
+    a, b = city_by_slug[r["slug_a"]], city_by_slug[r["slug_b"]]
+    na, nb = city_short(a), city_short(b)
+    body_rows = "".join(f"<tr><td>{lbl}</td><td>{va}</td><td>{vb}</td></tr>" for lbl, va, vb in cmp_rows(a, b))
+    mixed = "" if a["price_metric"] == b["price_metric"] else '<p class="tblnote">These two prices are different measures (Redfin median sale price vs. Zillow typical home value), so treat the gap between them as approximate.</p>'
+    cbody = f"""<div class="hero"><div class="arc" aria-hidden="true"></div><div class="wrap">
+<div class="kicker">Side by side</div><h1>{e(na)} vs. {e(nb)}</h1>
+<p>State protections, taxes, prices, climate and community for two places that appeal to the same kind of retiree. Figures with a source link to it; state law and tax data are sourced on the states page.</p>
+</div></div>
+<div class="wrap" style="padding:20px 20px 40px"><div class="tblwrap"><table><thead><tr><th></th>
+<th><a href="../city/{a['slug']}.html" data-ga="compare_city_click" data-ga-label="{a['slug']}">{e(na)}</a></th>
+<th><a href="../city/{b['slug']}.html" data-ga="compare_city_click" data-ga-label="{b['slug']}">{e(nb)}</a></th></tr></thead>
+<tbody>{body_rows}</tbody></table></div>{mixed}
+<a class="cta" href="../connect.html" data-ga="cta_click" data-ga-label="compare_{e(a['slug'])}_{e(b['slug'])}">Talk this through with us →</a></div>"""
+    with open(os.path.join(DIST, "compare", f"{a['slug']}-vs-{b['slug']}.html"), "w") as f:
+        f.write(page(f"{na} vs. {nb} — GayRetirees.com", cbody, f"compare/{a['slug']}-vs-{b['slug']}.html", depth=1,
+                     desc=f"{na} and {nb} compared on state protections, taxes, home prices, climate, airports and community."))
+
 thanks_body = """<div class="hero"><div class="wrap"><div class="kicker" id="tk">Received</div>
 <h1 id="th">Got it. A real person replies within one business day.</h1>
 <p id="tp">In the meantime, the <a href="states.html">state law &amp; tax table</a> is the most useful page on this site.</p>
@@ -851,6 +928,7 @@ sitemap_entries = (
     + [(f"agents/{a['slug']}.html", BUILD_DATE, "0.5") for a in agents if a["status"] == "active"]
     + [(f"moving/{r['route_slug']}.html", BUILD_DATE, "0.7") for r in routes]
     + [(f"best/{c['slug']}.html", BUILD_DATE, "0.7") for c in collections]
+    + [(f"compare/{r['slug_a']}-vs-{r['slug_b']}.html", max(city_by_slug[r['slug_a']]['last_reviewed'], city_by_slug[r['slug_b']]['last_reviewed']) or BUILD_DATE, "0.6") for r in compare]
 )
 pages = [u for u, _, _ in sitemap_entries]
 with open(os.path.join(DIST, "sitemap.xml"), "w") as f:
