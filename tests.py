@@ -268,6 +268,33 @@ check("living: every third-party rating names its publisher and year", all(
 check("living: rating rows carry a source and as-of", all(is_url(r["source_url"]) and parse_asof(r["asof"]) for r in politics if r["item"] == "rating"))
 check("living: every mayor/governor row lists a party value (party or Nonpartisan or VERIFY)", all(r["party"].strip() for r in politics if r["item"] in ("mayor", "governor")))
 
+# places / events / news rendering
+import tempfile
+TODAY = datetime.date.today()
+def _hrefs(h): return re.findall(r'<a\s[^>]*href="(https?://[^"]+)"[^>]*>', h)
+_closed = [p for p in places if p["status"] != "open"]
+check("living: closed places never render on their city page", all(p["url"] not in _html(next(c for c in cities if c["slug"] == p["city_slug"])) for p in _closed))
+_old = [n for n in news if (TODAY - parse_asof(n["date"])).days > 365]
+check("living: news older than 12 months is not shown", all(n["url"] not in _html(next(c for c in cities if c["slug"] == n["city_slug"])) for n in _old))
+class _A(HTMLParser):
+    def __init__(self): super().__init__(); self.bad = []
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        if tag == "a" and (a.get("href") or "").startswith("http") and "data-ga" not in a: self.bad.append(a["href"])
+def _untracked(c):
+    p = _A(); p.feed(_html(c)); return p.bad
+check("ga: every outbound link on city pages (places, events, news, sources) carries data-ga", all(not _untracked(c) for c in cities),
+      "; ".join(f"{c['slug']}:{_untracked(c)[:1]}" for c in cities if _untracked(c)))
+def _build_month(m):
+    d = tempfile.mkdtemp()
+    subprocess.run([sys.executable, "build.py"], env={**os.environ, "BUILD_MONTH": str(m), "BUILD_DIST": d}, check=True, capture_output=True)
+    return open(os.path.join(d, "index.html")).read()
+_jun = _build_month(6); _sep = _build_month(9); _dec = _build_month(12)
+check("living: Pride module shows June events in June", "Pride events in June" in _jun and "Denver" in _jun)
+check("living: Pride module shows September events in September", "Pride events in September" in _sep and "Blue Ridge Pride" in _sep)
+check("living: Pride module falls forward to the next month that has events", "Coming up: Pride events in" in _dec)
+check("living: Pride module event links carry data-ga", 'data-ga="event_click"' in _jun)
+
 # Freshness (advisory only): laws/politics 180d, news 90d, everything else 365d.
 TODAY = datetime.date.today()
 def stale(v, days):

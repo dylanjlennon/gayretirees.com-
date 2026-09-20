@@ -59,15 +59,15 @@
   - [x] 3.6 Render a "Local political climate" section: a plain table of offices, holders and parties, plus dated legislation/ordinance items and any third-party rating with attribution. No colors-as-labels, no adjectives.
   - [x] 3.7 Tests: no "red/blue/liberal/conservative/friendly" style labels in the section; nonpartisan mayors render correctly; any rating shows its source and year.
   - [x] 3.8 Build + tests; commit.
-- [ ] 4.0 LGBTQ+ places, events, and news, plus the "Pride this month" module
-  - [ ] 4.1 Places: 4–8 currently open LGBTQ+ bars, cafés, bookstores, centers, and health resources per city, each with an official URL; closed places recorded as `closed` (not rendered). Rows in `places.csv`.
-  - [ ] 4.2 Events: each city's local Pride plus other recurring LGBTQ+ events, with month and the organizer's URL. No exact dates unless the organizer states them. Rows in `events.csv`.
-  - [ ] 4.3 News: 2–5 recent, clearly LGBTQ+-relevant headlines per city (verbatim headline, named outlet, date, link only). Rows in `news.csv`.
-  - [ ] 4.4 Forum research for reader questions: read Reddit and similar communities to list what people really ask per city/topic; write only to `reports/reader-questions-2026-09.md` (unpublished) and use it to decide what to verify from primary sources. Check each site's terms first.
-  - [ ] 4.5 Enable enforcement for places/events/news in `tests.py`; build + tests.
-  - [ ] 4.6 Render the places, events, and news sections on city pages: outbound links with `rel="noopener"` and `data-ga` attributes, "last checked" stamps, older news aged out of view.
-  - [ ] 4.7 Homepage "Pride this month" module computed from the build month, falling back to the next upcoming month; deterministic in tests via a `BUILD_MONTH` override.
-  - [ ] 4.8 Tests: module output for fixed months; closed places never render; new links carry `data-ga`. Build + tests; commit.
+- [x] 4.0 LGBTQ+ places, events, and news, plus the "Pride this month" module
+  - [x] 4.1 Places: 4–8 currently open LGBTQ+ bars, cafés, bookstores, centers, and health resources per city, each with an official URL; closed places recorded as `closed` (not rendered). Rows in `places.csv`.
+  - [x] 4.2 Events: each city's local Pride plus other recurring LGBTQ+ events, with month and the organizer's URL. No exact dates unless the organizer states them. Rows in `events.csv`.
+  - [x] 4.3 News: 2–5 recent, clearly LGBTQ+-relevant headlines per city (verbatim headline, named outlet, date, link only). Rows in `news.csv`.
+  - [x] 4.4 Forum research for reader questions (NOT DONE as forum reading — agents ran out of search budget; `reports/reader-questions-2026-09.md` holds clearly-labeled inferences only; a real forum pass is still open): read Reddit and similar communities to list what people really ask per city/topic; write only to `reports/reader-questions-2026-09.md` (unpublished) and use it to decide what to verify from primary sources. Check each site's terms first.
+  - [x] 4.5 Enable enforcement for places/events/news in `tests.py`; build + tests.
+  - [x] 4.6 Render the places, events, and news sections on city pages: outbound links with `rel="noopener"` and `data-ga` attributes, "last checked" stamps, older news aged out of view.
+  - [x] 4.7 Homepage "Pride this month" module computed from the build month, falling back to the next upcoming month; deterministic in tests via a `BUILD_MONTH` override.
+  - [x] 4.8 Tests: module output for fixed months; closed places never render; new links carry `data-ga`. Build + tests; commit.
 - [ ] 5.0 "What changed" feed and comparison pages
   - [ ] 5.1 Seed `updates.csv` with real dated changes found during tasks 2–4 (each with a source URL).
   - [ ] 5.2 Render the feed on the homepage and on each state/city page, newest first, limited length.

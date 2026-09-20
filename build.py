@@ -4,7 +4,7 @@ import csv, html, json, os, re, shutil
 from datetime import date
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-DIST = os.path.join(ROOT, "dist")
+DIST = os.environ.get("BUILD_DIST") or os.path.join(ROOT, "dist")  # BUILD_DIST lets tests build into a temp dir
 e = html.escape
 SITE_URL = os.environ.get("SITE_URL", "https://gayretirees.com")  # set to https://yourdomain.com at deploy for absolute canonical/sitemap URLs
 BUILD_DATE = date.today().isoformat()
@@ -368,6 +368,58 @@ def politics_block(c):
             '<p>Who holds office right now and what recent action looks like, with sources. We report facts and leave the conclusions to you; party is shown only where a source states it.</p>'
             f'{table}{lst}</section>')
 
+# ---------- places, events, news: linked out, dated, and never copied ----------
+PLACE_TYPES = {"bar": "Bar", "cafe": "Café", "bookstore": "Bookstore", "center": "Community center", "health": "Health &amp; wellness", "other": "Community space"}
+MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+MONTH_ABBR = {m: i for i, m in enumerate(_MON, 1)}
+try: BUILD_MONTH = int(os.environ.get("BUILD_MONTH") or date.today().month)
+except ValueError: BUILD_MONTH = date.today().month
+def city_short(c): return c["city_label"].split(",")[0].split(" &")[0]
+def long_date(iso):
+    m = re.fullmatch(r"(\d{4})-(\d{2})-(\d{2})", iso or "")
+    return f"{_MON[int(m[2]) - 1]} {int(m[3])}, {m[1]}" if m else ""
+def places_block(c):
+    rows = [p for p in places if p["city_slug"] == c["slug"] and p["status"] == "open" and p["url"].startswith("http") and fmt_asof(p["verified_asof"])]
+    if not rows: return ""
+    order = list(PLACE_TYPES)
+    rows.sort(key=lambda p: (order.index(p["type"]), p["name"].lower()))
+    items = "".join(f'<li><a href="{e(p["url"])}" rel="noopener" data-ga="place_click" data-ga-label="{e(c["slug"])}:{e(p["name"])}">{e(p["name"])}</a> <span class="muted">— {PLACE_TYPES[p["type"]]}</span></li>' for p in rows)
+    newest = fmt_asof(max(p["verified_asof"] for p in rows))
+    return (f'<section id="places"><h2>LGBTQ+ places</h2><p>Each listing links to the place\'s own page. Each showed activity in 2026 when we checked in {newest}; '
+            f'hours and ownership change, so check before you go.</p><ul class="vlist">{items}</ul></section>')
+def events_block(c):
+    rows = [x for x in events if x["city_slug"] == c["slug"] and x["url"].startswith("http") and x["month"] in MONTH_ABBR]
+    if not rows: return ""
+    rows.sort(key=lambda x: (MONTH_ABBR[x["month"]], x["name"].lower()))
+    items = "".join(f'<li><a href="{e(x["url"])}" rel="noopener" data-ga="event_click" data-ga-label="{e(c["slug"])}:{e(x["name"])}">{e(x["name"])}</a> <span class="muted">— {MONTH_NAMES[MONTH_ABBR[x["month"]] - 1]}{(", " + e(x["typical_weeks"])) if x["typical_weeks"] else ""}</span></li>' for x in rows)
+    newest = fmt_asof(max(x["verified_asof"] for x in rows))
+    return (f'<section id="events"><h2>Pride &amp; community events</h2><p>Month comes from each organizer\'s own page (checked {newest}). Exact dates change every year, so confirm with the organizer.</p>'
+            f'<ul class="vlist">{items}</ul></section>')
+def news_block(c):
+    cutoff = date.fromisoformat(BUILD_DATE).toordinal() - 365
+    rows = []
+    for n in news:
+        try: d = date.fromisoformat(n["date"])
+        except ValueError: continue
+        if n["city_slug"] == c["slug"] and n["url"].startswith("http") and d.toordinal() >= cutoff: rows.append((d, n))
+    if not rows: return ""
+    rows.sort(key=lambda t: t[0], reverse=True)
+    items = "".join(f'<li><a href="{e(n["url"])}" rel="noopener" data-ga="news_click" data-ga-label="{e(c["slug"])}">{e(n["headline"])}</a> <span class="muted">— {e(n["outlet"])}, {long_date(n["date"])}</span></li>' for d, n in rows[:5])
+    return ('<section id="news"><h2>In the news</h2><p>Recent local headlines. Each links to the outlet\'s own page; we don\'t republish articles, and a link is not an endorsement.</p>'
+            f'<ul class="vlist">{items}</ul></section>')
+def pride_block():
+    """Homepage module: Pride/community events in the current month, else the next month that has any."""
+    for offset in range(12):
+        m = (BUILD_MONTH - 1 + offset) % 12 + 1
+        hits = [(x, city_by_slug[x["city_slug"]]) for x in events if MONTH_ABBR.get(x["month"]) == m and x["city_slug"] in city_by_slug and x["url"].startswith("http") and re.search(r"pride", x["name"], re.I)]
+        if hits:
+            hits.sort(key=lambda t: t[1]["city_label"])
+            items = "".join(f'<li><a href="city/{c["slug"]}.html" data-ga="pride_city_click" data-ga-label="{e(c["slug"])}">{e(city_short(c))}</a>: <a href="{e(x["url"])}" rel="noopener" data-ga="event_click" data-ga-label="{e(c["slug"])}:{e(x["name"])}">{e(x["name"])}</a></li>' for x, c in hits)
+            head = f"Pride events in {MONTH_NAMES[m - 1]}" if offset == 0 else f"Coming up: Pride events in {MONTH_NAMES[m - 1]}"
+            return (f'<section class="tier wrap" id="calendar"><div class="kicker">On the calendar</div><h2>{head}</h2><ul class="vlist">{items}</ul>'
+                    '<p class="tblnote" style="margin-top:0">Month comes from each organizer\'s own page; exact dates change every year, so confirm with the organizer.</p></section>')
+    return ""
+
 # ---------- index ----------
 n_sale = sum(1 for c in cities if c["price_metric"] == "median_sale")
 n_typ = sum(1 for c in cities if c["price_metric"] == "typical_value")
@@ -417,6 +469,7 @@ latest_reviewed = max((c["last_reviewed"] for c in cities if c["last_reviewed"])
 unpublished = any(c["status"] != "published" for c in cities)
 index_stamp = (f"Data status: {'partially published' if unpublished else 'published'} "
     f"· last reviewed {e(latest_reviewed)} · legal data via Movement Advancement Project")
+pride_html = pride_block()
 index_body = f"""<div class="hero"><div class="arc" aria-hidden="true"></div><div class="wrap">
 <div class="kicker">For people who get to choose</div>
 <h1>Your next chapter, your terms.</h1>
@@ -430,6 +483,7 @@ index_body = f"""<div class="hero"><div class="arc" aria-hidden="true"></div><di
 <section class="tier wrap"><div class="kicker">Or filter by what's non-negotiable</div><h2>Quick filters</h2>
 <div class="controls">{quick_pills}</div>
 </section>
+{pride_html}
 <div class="wrap" style="padding:14px 0 36px;text-align:center;border-top:2px dashed var(--line)">
 <p style="font-size:1.05rem;font-weight:700;margin-bottom:12px">Have your own must-haves? Skip the browsing.</p>
 <a class="cta" href="connect.html" data-ga="cta_click" data-ga-label="mid_banner">Talk to a real person →</a>
@@ -492,7 +546,7 @@ for c in cities:
     facts = [f for f in facts if f]
     def sourced_fact(label, value, src, suffix=""):
         if not value: return None
-        link = f' <a href="{e(src)}" style="font-size:.72rem">(source)</a>' if src else ""
+        link = f' <a href="{e(src)}" rel="noopener" style="font-size:.72rem" data-ga="source_click" data-ga-label="{e(label)}">(source)</a>' if src else ""
         return (label, f"{e(value)}{suffix}{link}")
     for extra in [
         sourced_fact("Same-sex couple households", c.get("same_sex_couples_pct",""), c.get("demographics_src",""), "%"),
@@ -520,6 +574,7 @@ for c in cities:
         living.append(f"<p><strong>Walkability:</strong> {e(c['walkability'])}.</p>")
     living_block = "".join(living)
     politics_html = politics_block(c)
+    places_html, events_html, news_html = places_block(c), events_block(c), news_block(c)
     body = f"""<div class="cityhead"><div class="wrap">
 <div class="kicker">{e(c['region'])} · Tier {c['tier']}</div>
 <h1>{e(c['city_label'])}</h1><p style="max-width:60ch;margin-top:10px">{e(c['one_liner'])}</p>
@@ -535,6 +590,7 @@ for c in cities:
 <h2>Climate &amp; getting there</h2>
 {living_block}
 {politics_html}
+{places_html}{events_html}{news_html}
 {{straight_talk}}
 {{agent_block}}
 {{draft_note}}
