@@ -79,7 +79,7 @@
   - [x] 5.6 Tests: every `compare.csv` pair renders, both cities are published, no superlative wording, GA attributes present. Build + tests; commit.
 - [ ] 6.0 Freshness automation and launch verification
   - [x] 6.1 Make sitemap `lastmod` use the newest data date for each page rather than the build date.
-  - [ ] 6.2 Weekly rebuild: with Dylan's go-ahead, create a Netlify build hook (CLI or dashboard); Dylan adds it as a GitHub secret; write `.github/workflows/weekly-rebuild.yml` with a weekly cron.
+  - [ ] 6.2 (workflow file written; needs Dylan: create the Netlify build hook + GitHub secret) Weekly rebuild: with Dylan's go-ahead, create a Netlify build hook (CLI or dashboard); Dylan adds it as a GitHub secret; write `.github/workflows/weekly-rebuild.yml` with a weekly cron.
   - [x] 6.3 Extend the `ga:` tests to cover every new link and CTA.
   - [ ] 6.4 Ask Dylan, then push to `origin/main`; confirm the Netlify deploy is READY.
   - [ ] 6.5 Verify the live site in Chrome: new sections render, stamps and source links work, comparison pages load, GA4 events fire.

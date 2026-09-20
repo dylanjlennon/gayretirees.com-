@@ -17,7 +17,7 @@ dylanjlennon@gmail.com on submission. All 23 cities are `status=published`
 measure recorded in `price_metric`). Real GA4 property is live
 (`G-HMVXKSHKN9`). Agent signup + profile forms exist. One real agent (Dylan,
 Asheville); no Stripe yet. `build.py` runs clean and `tests.py` is green
-(81 checks). Next: `tasks/0001-prd-living-city-guide.md` (living city guide).
+(114 checks). PRD 0001 (living city guide) is built and committed locally: sourced climate/airports/districts/ordinances, political climate, places/events/news, What-changed feed, 21 comparison pages. Pending: push to production, weekly rebuild hook, GA4 baseline, and a second sourcing pass on remaining VERIFY fields. Next PRDs: 0002 local agent voices, 0003 agent recruitment, 0004 measurement.
 
 ---
 
