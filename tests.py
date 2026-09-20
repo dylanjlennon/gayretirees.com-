@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """End-to-end test suite. Run: python3 tests.py  — exits nonzero on any failure."""
-import csv, os, re, subprocess, sys, time, urllib.request
+import csv, html, os, re, subprocess, sys, time, urllib.request
 from html.parser import HTMLParser
 
 ROOT = os.path.dirname(os.path.abspath(__file__)); DIST = os.path.join(ROOT, "dist")
@@ -16,7 +16,7 @@ check("data: 23 cities", len(cities) == 23)
 check("data: unique slugs", len({c["slug"] for c in cities}) == len(cities))
 check("data: every city state_code resolves", all(c["state_code"] in states for c in cities))
 check("data: tiers valid", all(c["tier"] in {"1","2","3"} for c in cities))
-check("data: local_ndo enum valid", all(c["local_ndo"] in {"yes","partial","no"} for c in cities))
+check("data: local_ndo enum valid", all(c["local_ndo"] in {"yes","partial","no","VERIFY"} for c in cities))
 check("data: housing_law enum valid", all(s["housing_law"] in {"explicit","interpreted","none","VERIFY"} for s in states.values()))
 req = ["slug","city_label","one_liner","median_price_usd","price_asof","airport","last_reviewed","status","lifestyle_tags"]
 check("data: no empty required city fields", all(c[k].strip() for c in cities for k in req))
@@ -235,14 +235,25 @@ check("living: every populated date is ISO (YYYY-MM or YYYY-MM-DD)", all(
       parse_asof(r["date"]) for r in news + updates))
 
 # Source + as-of enforcement per fact group. Flip a group to True once its research pass is complete.
-ENFORCED = {"airport": False, "climate": False, "pride_event": False,
-            "lgbtq_district": False, "community_org": False, "local_ndo": False}
+ENFORCED = {"airport": True, "climate": True, "pride_event": True,
+            "lgbtq_district": True, "community_org": True, "local_ndo": True}
+GROUP_COLS = {"climate": ["summer_high_f", "winter_low_f", "hazard_flags"]}
 def real(v): return bool(v.strip()) and "VERIFY" not in v
 for g, on in ENFORCED.items():
+    cols = GROUP_COLS.get(g, [g])
     ok = all(is_url(c[g+"_src"]) and parse_asof(c[g+"_asof"]) for c in cities
-             if c["status"] == "published" and real(c[g]))
+             if c["status"] == "published" and any(real(c[k]) for k in cols))
     if on: check(f"living: every published city has {g} source + as-of", ok)
     else: print(f"SKIP living: {g} source/as-of not enforced yet")
+check("living: unverified fields never carry a source (no orphan src on VERIFY values)", all(
+      not (c[g+"_src"].strip()) for c in cities for g in ENFORCED
+      if not any(real(c[k]) for k in GROUP_COLS.get(g, [g]))))
+def _html(c): return open(os.path.join(DIST, "city", c["slug"]+".html")).read()
+check("living: no VERIFY placeholder text renders on any city page", all("VERIFY" not in _html(c) for c in cities))
+check("living: verified climate/airport show a Verified stamp with the source link", all(
+      ("Verified" in _html(c)) and
+      all(html.escape(c[g+"_src"].split(";")[0].strip()) in _html(c) for g in ("airport", "climate") if is_url(c[g+"_src"]))
+      for c in cities))
 
 # Freshness (advisory only): laws/politics 180d, news 90d, everything else 365d.
 TODAY = datetime.date.today()

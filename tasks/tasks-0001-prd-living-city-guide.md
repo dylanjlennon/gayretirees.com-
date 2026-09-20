@@ -20,6 +20,7 @@
 
 ### Notes
 
+- 2026-09-20: first research pass covered 23 cities; a gap-fill wave targets remaining `VERIFY` fields (districts, ordinance status, mayors' parties, thin place lists). Re-ingest is idempotent.
 - Loop for every change: edit CSV or `build.py` → `python3 build.py` → `python3 tests.py`. Never hand-edit `dist/`.
 - Research rule: every fact needs a source URL and an as-of date; unknown = blank + `VERIFY`. No guessing.
 - Forums (Reddit etc.) are for discovering questions only — never quoted, never cited as fact, never bulk-scraped.
@@ -41,14 +42,14 @@
   - [x] 1.8 Add a `warn()` helper and freshness checks (laws/politics 180 days, news 90 days, everything else 365) that print `WARN` but never fail the suite.
   - [x] 1.9 Refresh stale `TODO.md` / `ROADMAP.md` facts (23 published, GA4 live, pricing conflict noted).
   - [x] 1.10 Run build + full tests; commit.
-- [ ] 2.0 Source the existing un-sourced city fields for all 23 cities
-  - [ ] 2.1 Airports: for each city, nearest commercial airport (code, name), distance from a citable source (airport or official page); update `airport` and fill `airport_src` / `airport_asof`.
-  - [ ] 2.2 Climate: verify `summer_high_f` / `winter_low_f` against NOAA NCEI climate normals; source `hazard_flags` from FEMA's National Risk Index (or similar official source); fill `climate_src` / `climate_asof`.
-  - [ ] 2.3 Pride event, LGBTQ district, community org: confirm each from the organizer's, city's, or tourism board's own page and confirm the org is still active; fill the `_src` / `_asof` columns. Unverifiable → `VERIFY`.
-  - [ ] 2.4 Local ordinance status (`local_ndo`: yes/partial/no): verify against the city code, HRC MEI, or MAP; fill `local_ndo_src` / `_asof`.
-  - [ ] 2.5 Turn on the `ENFORCED` flags for these six groups in `tests.py`; build + tests.
-  - [ ] 2.6 In `build.py`, render a "Climate & getting there" section on city pages with a "Verified <Month Year> · Source" line per group; hide any `VERIFY` item.
-  - [ ] 2.7 Add tests: stamp and source link appear on every published city page; no `VERIFY` text renders. Build + tests; commit.
+- [x] 2.0 Source the existing un-sourced city fields for all 23 cities
+  - [x] 2.1 Airports: for each city, nearest commercial airport (code, name), distance from a citable source (airport or official page); update `airport` and fill `airport_src` / `airport_asof`.
+  - [x] 2.2 Climate: verify `summer_high_f` / `winter_low_f` against NOAA NCEI climate normals; source `hazard_flags` from FEMA's National Risk Index (or similar official source); fill `climate_src` / `climate_asof`.
+  - [x] 2.3 Pride event, LGBTQ district, community org: confirm each from the organizer's, city's, or tourism board's own page and confirm the org is still active; fill the `_src` / `_asof` columns. Unverifiable → `VERIFY`.
+  - [x] 2.4 Local ordinance status (`local_ndo`: yes/partial/no): verify against the city code, HRC MEI, or MAP; fill `local_ndo_src` / `_asof`.
+  - [x] 2.5 Turn on the `ENFORCED` flags for these six groups in `tests.py`; build + tests.
+  - [x] 2.6 In `build.py`, render a "Climate & getting there" section on city pages with a "Verified <Month Year> · Source" line per group; hide any `VERIFY` item.
+  - [x] 2.7 Add tests: stamp and source link appear on every published city page; no `VERIFY` text renders. Build + tests; commit.
 - [ ] 3.0 Political climate data and section for all 23 cities/states
   - [ ] 3.1 State level (23 states incl. DC): governor + party from the official state site; legislature control per chamber from the official legislature site, cross-checked on NCSL/Ballotpedia. Rows in `politics.csv`.
   - [ ] 3.2 City level (23 cities): mayor + party from the official city site, or `nonpartisan` where the office is nonpartisan (never inferred); cross-check Ballotpedia. Disagreements → official site wins and a note is added; unresolved → `VERIFY`.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Static site generator: reads data/*.csv, writes dist/. No dependencies."""
-import csv, html, json, os, shutil
+import csv, html, json, os, re, shutil
 from datetime import date
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -66,6 +66,29 @@ PRICE_METRICS = {
     "typical_value": {"label": "Typical home value", "source": "Zillow", "short": "typical"},
 }
 def pm(c): return PRICE_METRICS[c["price_metric"]]
+
+# ---------- "verified" stamps: every sourced fact shows when it was checked and where ----------
+_MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+def fmt_asof(v):
+    """'2026-08' or '2026-08-31' -> 'Aug 2026'; anything else -> ''."""
+    m = re.fullmatch(r"(\d{4})-(\d{2})(?:-\d{2})?", (v or "").strip())
+    return f"{_MON[int(m[2]) - 1]} {m[1]}" if m and 1 <= int(m[2]) <= 12 else ""
+def src_urls(src): return [u.strip() for u in (src or "").split(";") if u.strip().startswith("http")]
+SRC_LABELS = {"ncei.noaa.gov": "NOAA normals", "services.arcgis.com": "FEMA National Risk Index",
+              "fema.gov": "FEMA", "hazards.fema.gov": "FEMA National Risk Index", "ncsl.org": "NCSL", "ballotpedia.org": "Ballotpedia",
+              "airnav.com": "AirNav (FAA data)", "hrc.org": "HRC", "reddit.com": "reddit.com"}
+def host(u):
+    h = re.sub(r"^https?://(www\.)?", "", u).split("/")[0]
+    return SRC_LABELS.get(h, h)
+def stamp(src, asof, label=""):
+    """'Verified Aug 2026 · noaa.gov' with real links; empty when the source or date is missing."""
+    urls, when = src_urls(src), fmt_asof(asof)
+    if not urls or not when: return ""
+    links = " · ".join(f'<a href="{e(u)}" rel="noopener" data-ga="source_click" data-ga-label="{e(label)}">{e(host(u))}</a>' for u in urls)
+    return f'<span class="vstamp">Verified {when} · {links}</span>'
+def verified(v, src, asof):
+    """A fact is shown only when it has a real value, a source link, and a valid date."""
+    return bool(v and v.strip()) and "VERIFY" not in v and bool(src_urls(src)) and bool(fmt_asof(asof))
 agents = load("agents.csv")
 # Living-guide data (PRD 0001). Header-only files are valid; sections render only from verified rows.
 politics = load("politics.csv")
@@ -120,6 +143,8 @@ nav a:hover{border-bottom-color:var(--pop);background:var(--popt)}
 @media(max-width:860px){.arc{width:240px;height:120px;opacity:.35;right:-30px}}
 @media(max-width:600px){.arc{display:none}}
 .kicker{font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:var(--coral);font-weight:700;margin-bottom:12px}
+.vstamp{display:block;font-size:.85rem;color:var(--mut);margin-top:4px}
+.vstamp a{color:var(--mut)}
 .stamp{display:inline-block;border:2px solid var(--ink);border-radius:999px;padding:5px 16px;font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--ink);opacity:.72;transform:rotate(-2deg);margin-top:18px;background:var(--surface)}
 .controls{display:flex;gap:8px;flex-wrap:wrap;padding:20px 0 6px}
 .chip{border:2px solid var(--ink);background:var(--surface);border-radius:999px;padding:10px 16px;font:700 .92rem "Karla";cursor:pointer;box-shadow:2px 2px 0 rgba(30,26,43,.15)}
@@ -390,22 +415,30 @@ for c in cities:
     s = states[c["state_code"]]
     price = f"${int(c['median_price_usd']):,}" if c["median_price_usd"] else "—"
     price_badge = "" if c["status"] == "published" else " <span class='b mid'>est.</span>"
+    def vfact(label, value, src):
+        """Spine row that only exists when the value is real; links its source."""
+        if not (value and value.strip()) or "VERIFY" in value: return None
+        u = src_urls(src)
+        link = (f' <a href="{e(u[0])}" rel="noopener" style="font-size:.72rem" data-ga="source_click" data-ga-label="{e(label)}">(source)</a>' if u else "")
+        return (label, f"{e(value)}{link}")
+    temps_ok = c["summer_high_f"].isdigit() and c["winter_low_f"].isdigit()
     facts = [
         (f"{pm(c)['label']} ({pm(c)['source']})", f"{price}{price_badge}"),
         ("State housing law", lawbadge(s["housing_law"])),
         ("Public accommodations", lawbadge(s["pa_law"])),
-        ("Local ordinance", e(c["local_ndo"])),
+        vfact("Local ordinance", c["local_ndo"], c["local_ndo_src"]),
         ("LTC protections", e(s["ltc_protections"])),
         ("State income tax", e(s["income_tax"].replace("-", " "))),
-        ("Community anchor", e(c["community_org"])),
-        ("Pride", e(c["pride_event"])),
-        ("District", e(c["lgbtq_district"])),
+        vfact("Community anchor", c["community_org"], c["community_org_src"]),
+        vfact("Pride", c["pride_event"], c["pride_event_src"]),
+        vfact("District", c["lgbtq_district"], c["lgbtq_district_src"]),
         ("HIV care", e(c["hiv_care"])),
         ("Walkability", e(c["walkability"])),
-        ("Summer high / winter low", f"{e(c['summer_high_f'])}° / {e(c['winter_low_f'])}°"),
-        ("Hazards", e(c["hazard_flags"])),
-        ("Airport", e(c["airport"])),
+        vfact("Summer high / winter low", f"{c['summer_high_f']}° / {c['winter_low_f']}°" if temps_ok else "", c["climate_src"]),
+        vfact("Hazards", c["hazard_flags"], c["climate_src"]),
+        vfact("Airport", c["airport"], c["airport_src"]),
     ]
+    facts = [f for f in facts if f]
     def sourced_fact(label, value, src, suffix=""):
         if not value: return None
         link = f' <a href="{e(src)}" style="font-size:.72rem">(source)</a>' if src else ""
@@ -422,6 +455,19 @@ for c in cities:
         hero_img = f'<div class="heroimg"><img src="{e(c["hero_image_url"])}" alt="{e(c["hero_image_alt"])}" loading="lazy">{credit}</div>'
     else:
         hero_img = ""
+    ndo_sentence = f" Local ordinance status: {e(c['local_ndo'])} (see source in the sidebar)." if verified(c["local_ndo"], c["local_ndo_src"], c["local_ndo_asof"]) else ""
+    org_sentence = f"Anchor institution: {e(c['community_org'])}. " if verified(c["community_org"], c["community_org_src"], c["community_org_asof"]) else ""
+    living = []
+    if temps_ok and verified(c["climate"], c["climate_src"], c["climate_asof"]):
+        haz = f" County-level FEMA risk ratings of Relatively High or Very High: {e(c['hazard_flags'])}." if "VERIFY" not in c["hazard_flags"] and c["hazard_flags"] else ""
+        living.append(f"<p><strong>Climate:</strong> {e(c['climate'])}, about {e(c['summer_high_f'])}° July highs and {e(c['winter_low_f'])}° January lows (1991–2020 normals from the nearest NOAA station).{haz}{stamp(c['climate_src'], c['climate_asof'], 'climate')}</p>")
+    elif verified(c["hazard_flags"], c["climate_src"], c["climate_asof"]):
+        living.append(f"<p><strong>Hazards:</strong> County-level FEMA risk ratings of Relatively High or Very High: {e(c['hazard_flags'])}.{stamp(c['climate_src'], c['climate_asof'], 'climate')}</p>")
+    if verified(c["airport"], c["airport_src"], c["airport_asof"]):
+        living.append(f"<p><strong>Getting here:</strong> {e(c['airport'])}.{stamp(c['airport_src'], c['airport_asof'], 'airport')}</p>")
+    if c["walkability"]:
+        living.append(f"<p><strong>Walkability:</strong> {e(c['walkability'])}.</p>")
+    living_block = "".join(living)
     body = f"""<div class="cityhead"><div class="wrap">
 <div class="kicker">{e(c['region'])} · Tier {c['tier']}</div>
 <h1>{e(c['city_label'])}</h1><p style="max-width:60ch;margin-top:10px">{e(c['one_liner'])}</p>
@@ -431,11 +477,11 @@ for c in cities:
 <div class="wrap cols"><aside class="spine"><h2>At a glance</h2>{spine}</aside>
 <div class="body">
 <h2>The legal picture</h2>
-<p>{e(c['city_label'].split(',')[0])} sits in {e(s['state_name'])}: {lawbadge(s['housing_law'])} for housing and {lawbadge(s['pa_law'])} for public accommodations. {e(s['tax_note'])}. Local ordinance status: {e(c['local_ndo'])}. Verify current status via the Movement Advancement Project before relying on it — state law is moving.</p>
+<p>{e(c['city_label'].split(',')[0])} sits in {e(s['state_name'])}: {lawbadge(s['housing_law'])} for housing and {lawbadge(s['pa_law'])} for public accommodations. {e(s['tax_note'])}.{ndo_sentence} Verify current status via the Movement Advancement Project before relying on it — state law is moving.</p>
 <h2>Community &amp; healthcare</h2>
-<p>Anchor institution: {e(c['community_org'])}. {e(c['senior_lgbtq_asset'])}. HIV/LGBTQ-competent care: {e(c['hiv_care'])}.</p>
-<h2>Living here</h2>
-<p>Climate: {e(c['climate'])}, roughly {e(c['summer_high_f'])}° summer highs and {e(c['winter_low_f'])}° winter lows. Walkability: {e(c['walkability'])}. Hazard awareness: {e(c['hazard_flags'])}. Air access: {e(c['airport'])}.</p>
+<p>{org_sentence}{e(c['senior_lgbtq_asset'])}. HIV/LGBTQ-competent care: {e(c['hiv_care'])}.</p>
+<h2>Climate &amp; getting there</h2>
+{living_block}
 {{straight_talk}}
 {{agent_block}}
 {{draft_note}}
@@ -642,8 +688,8 @@ for r in routes:
 <tr><td>State housing law</td><td>{fromlaw}</td><td>{lawbadge(ts['housing_law'])}</td></tr>
 <tr><td>State income tax</td><td>{e(fromtax)}</td><td>{e(taxline(to['state_code']))}</td></tr>
 <tr><td>{pm(to)['label']} ({pm(to)['source']})</td><td>—</td><td>${int(to['median_price_usd']):,} <span class="b mid">est.</span></td></tr>
-<tr><td>Summer / winter</td><td>—</td><td>{e(to['summer_high_f'])}° / {e(to['winter_low_f'])}°</td></tr>
-<tr><td>Community anchor</td><td>—</td><td>{e(to['community_org'])}</td></tr></tbody></table></div>
+<tr><td>Summer / winter</td><td>—</td><td>{f"{e(to['summer_high_f'])}° / {e(to['winter_low_f'])}°" if to['summer_high_f'].isdigit() and to['winter_low_f'].isdigit() else "—"}</td></tr>
+<tr><td>Community anchor</td><td>—</td><td>{e(to['community_org']) if verified(to['community_org'], to['community_org_src'], to['community_org_asof']) else "—"}</td></tr></tbody></table></div>
 <h2>The receiving end</h2>
 <p>{e(to['one_liner'])} Full picture on the <a href="../city/{to['slug']}.html">{e(to['city_label'])} guide</a>.</p>
 <a class="cta" href="../connect.html">Talk this move through with us →</a>
