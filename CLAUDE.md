@@ -15,8 +15,14 @@ These rules are permanent. Follow them on every change, no exceptions.
 ## Claims and rankings
 - Rank/numeric claims (e.g. "#1 origin") are allowed **only** on pages whose
   data is third-party cited, with the source and as-of date recorded.
-- No page currently qualifies — all copy stays qualitative. Do not add
-  superlatives when polishing copy.
+- Third-party ratings (e.g. HRC Municipal Equality Index) may be shown as
+  numbers (approved 2026-09-20) only when the row records the named publisher,
+  source URL, publication year, and as-of date; only on the page of the
+  city/state that was rated; and attributed to the publisher, never stated as
+  our own finding. Unrated places show nothing.
+- No page qualifies until such a rating is recorded in `data/politics.csv` —
+  until then all copy stays qualitative. Our own rankings and superlatives
+  ("best", "#1", "safest") stay banned; do not add them when polishing copy.
 
 ## Monetization boundary
 - Every paid agent link keeps `rel="sponsored"` and its on-card disclosure.

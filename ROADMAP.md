@@ -7,15 +7,17 @@ own (Google, Netlify, Stripe, a bank). **[CLAUDE+BROWSER]** I can drive it
 in Chrome via browser automation, but only while you're logged in — I'll
 ask you to open the tab and authenticate, then I take over the clicking.
 
-Current state as of 2026-08-30: **the site is live at gayretirees.com**,
+Current state as of 2026-09-20: **the site is live at gayretirees.com**,
 deploying automatically from `github.com/dylanjlennon/gayretirees.com-`
 main branch (Netlify build `python3 build.py` → `dist`, `SITE_URL` env var
 set). Homepage rearchitected around lifestyle-first browsing. Both forms
 (`relocation-intake`, `newsletter`) are active and notify
-dylanjlennon@gmail.com on submission. 14 of 23 cities `status=published`,
-9 still `draft` pending a manual price pull. One real agent (Dylan,
-Asheville). No live GA4 property yet, no Stripe. `build.py` runs clean,
-`tests.py` is green (52/52).
+dylanjlennon@gmail.com on submission. All 23 cities are `status=published`
+(prices re-verified 2026-09-20 against Redfin/Zillow, with each row's
+measure recorded in `price_metric`). Real GA4 property is live
+(`G-HMVXKSHKN9`). Agent signup + profile forms exist. One real agent (Dylan,
+Asheville); no Stripe yet. `build.py` runs clean and `tests.py` is green
+(81 checks). Next: `tasks/0001-prd-living-city-guide.md` (living city guide).
 
 ---
 
@@ -29,14 +31,14 @@ Asheville). No live GA4 property yet, no Stripe. `build.py` runs clean,
 - [ ] **[DYLAN]** Dylan's NC real estate license number (`agents.csv`,
       currently `NC-REPLACE`) — this is a legal identifier, I won't guess it.
 - [x] Tier-1 verification pass — done 2026-08-30 for all 23 states + 23
-      cities. 14 cities now `status=published` with a real sourced price
-      (`price_src`). 9 cities (wilton-manors, st-pete, sarasota, key-west,
-      savannah, rehoboth, new-hope, provincetown, ogunquit) stay `draft` —
-      Redfin/Zillow blocked automated fetches and search-snippet prices for
-      those specific markets were too inconsistent to trust. **[DYLAN]** or
-      **[CLAUDE+BROWSER]**: needs a manual price pull for those 9 (5 min
-      each on Redfin/Zillow directly), or I can do it via Chrome automation
-      once the extension is connected.
+      cities. 14 cities published with a real sourced price (`price_src`);
+      9 (wilton-manors, st-pete, sarasota, key-west, savannah, rehoboth,
+      new-hope, provincetown, ogunquit) were held as `draft` at the time.
+      **Resolved:** all 23 were sourced and published 2026-09-04, and every
+      price was re-pulled 2026-09-20 (Redfin pages via Chrome; Zillow via its
+      public ZHVI research CSV, cross-checked against the Zillow city pages).
+      That re-pull corrected wilton-manors (was 492118, Zillow shows 579530)
+      and guerneville (was 567660, Zillow shows 518406).
 
 ## Phase 2 — Get it live (blocks anyone seeing the site)
 
@@ -73,21 +75,21 @@ Asheville). No live GA4 property yet, no Stripe. `build.py` runs clean,
 
 ## Phase 5 — Know what's working
 
-- [ ] **[DYLAN]** or **[CLAUDE+BROWSER]** Create the real GA4 property at
-      analytics.google.com. I can navigate and click through this in Chrome
-      if you're logged into the right Google account — say the word.
-- [ ] **[CLAUDE]** Drop the real Measurement ID into `build.py`'s `GA_ID`
-      (or wire `GA_MEASUREMENT_ID` as a Netlify env var), rebuild — event
-      plumbing (`analytics.js`, all `data-ga`/`data-ga-form` attrs, 12
-      dedicated tests) is already built and waiting for a real ID.
+- [x] Real GA4 property created 2026-09-04; Measurement ID `G-HMVXKSHKN9` is
+      the default `GA_ID` in `build.py` (overridable via `GA_MEASUREMENT_ID`).
+      Event plumbing (`analytics.js`, `data-ga`/`data-ga-form` attrs, dedicated
+      tests) is live.
+- [ ] **[DYLAN]** Read GA4 and share numbers (or grant API access) so agent
+      pitches (PRD 0003) use real traffic and lead counts only.
 
 ## Ongoing / not blocking launch
 
-- [ ] Agent signup flow doesn't exist yet — today, onboarding a new agent
-      means manually adding a row to `agents.csv`. Worth a real form once
-      there's more than one paying agent.
-- [ ] `dylan_note` fields are human-only per CLAUDE.md — I will never draft
-      these, that's you whenever you want a page to carry your own voice.
+- [x] Agent signup flow exists (`agent-signup.html` → `agent-profile.html`).
+      Approved agents are still added to `agents.csv` by hand.
+- [ ] Agent pricing is inconsistent between `AGENT-OUTREACH.md` and this file —
+      resolve in PRD 0003 (see `tasks/research-gayrealestate-com-2026-09-20.md`).
+- [x] City `editorial_note` (renamed from `dylan_note`) may be drafted by Claude
+      per `VOICE.md`; agent `blurb`/`testimonial` stay human-only.
 
 ---
 

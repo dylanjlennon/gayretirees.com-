@@ -58,6 +58,10 @@ In order:
 - [x] Netlify Forms → Notifications → route relocation-intake + newsletter
       to dylanjlennon@gmail.com — done 2026-08-30. Switch to
       dylan@gayretirees.com once that mailbox is live.
+- [x] Update 2026-09-20: the Tier 1 note above is historical. All 23 cities are
+      now published; every price was re-verified 2026-09-20 and labeled by
+      measure (`price_metric`: Redfin median sale price vs Zillow typical
+      home value). `dylan_note` is now `editorial_note` (see VOICE.md).
 - [ ] Stripe Payment Links for $29/$79/$149/$249 tiers + $19 founding rate
 - [x] Analytics plumbing done: GA4 snippet on every page (build.py `GA_SNIPPET`),
       plus a shared `analytics.js` that fires GA4 events for every form

@@ -1,0 +1,83 @@
+## Relevant Files
+
+- `tasks/0001-prd-living-city-guide.md` - The PRD this list implements.
+- `CLAUDE.md` - Project rules; "Claims and rankings" gets the approved third-party-ratings carve-out.
+- `data/cities.csv` - Gains `_src`/`_asof` columns for airport, climate, pride_event, lgbtq_district, community_org, local_ndo; price columns re-audited.
+- `data/states.csv` - Existing sourced state law/tax data; state-level political facts reference these state codes.
+- `data/politics.csv` (new) - Governor/legislature/mayor + party, ordinances, legislation, third-party ratings, each with source + as-of.
+- `data/places.csv` (new) - Linked LGBTQ+ bars/cafés/centers with verification dates.
+- `data/events.csv` (new) - Recurring Pride and community events by month.
+- `data/news.csv` (new) - Curated, linked LGBTQ+-relevant headlines per city.
+- `data/updates.csv` (new) - "What changed" feed entries.
+- `data/compare.csv` (new) - Curated city pairs for comparison pages.
+- `build.py` - Loads new CSVs, renders new sections/pages, computes "Pride this month", sitemap lastmod.
+- `tests.py` - New schema, source/as-of, freshness (warn-only), no-superlative/no-partisan-label, and `ga:` coverage checks.
+- `reports/price-audit-2026-09-20.md` (new) - Audit of existing price sources before re-pulling.
+- `data/cities.csv` also gained `price_metric`.
+- `reports/reader-questions-2026-09.md` (new, unpublished) - Recurring questions found in forums, for topic discovery only.
+- `.github/workflows/weekly-rebuild.yml` (new) - Scheduled trigger for a Netlify build hook.
+- `TODO.md`, `ROADMAP.md` - Stale (14 vs 23 published, GA4 status); refreshed as part of this work.
+
+### Notes
+
+- Loop for every change: edit CSV or `build.py` → `python3 build.py` → `python3 tests.py`. Never hand-edit `dist/`.
+- Research rule: every fact needs a source URL and an as-of date; unknown = blank + `VERIFY`. No guessing.
+- Forums (Reddit etc.) are for discovering questions only — never quoted, never cited as fact, never bulk-scraped.
+- Stage specific files (not `git add .`). Commit only when the build is clean and all tests are green.
+- Pushing to `origin/main` deploys the live site — ask Dylan before each push.
+- Research sub-tasks (x.1–x.4) run as parallel passes by region; results land in CSV rows only after source URLs are recorded.
+- New tests are added with a per-group enforcement flag (`ENFORCED`) so they can land before the data does, then get switched on when a group's research is complete.
+
+## Tasks
+
+- [x] 1.0 Rules, schema, and test scaffolding
+  - [x] 1.1 Update `CLAUDE.md` "Claims and rankings": allow numeric ratings only from a named third party, with source URL, publication year and as-of date, shown only on the rated city/state's page; keep the "no page qualifies until sourced" wording accurate.
+  - [x] 1.2 Audit every city's `price_src` / `price_asof` (23 rows): flag non-Redfin/Zillow sources, blog/aggregator links, dead URLs, and dates older than 6 months. Write findings to `reports/price-audit-2026-09-20.md`.
+  - [x] 1.3 Re-pull prices (done for all 23: Redfin pages via Chrome; Zillow via its public ZHVI CSV, cross-checked on Zillow pages) and add `price_metric` so each is labeled truthfully (Redfin median sale price vs Zillow typical home value). Record the exact page URL and today's date in `cities.csv`; anything unreadable stays `VERIFY`. Build + tests.
+  - [x] 1.4 Create header-only CSVs: `politics.csv`, `places.csv`, `events.csv`, `news.csv`, `updates.csv`, `compare.csv` with the columns defined in PRD §4.
+  - [x] 1.5 Add empty `_src` / `_asof` columns to `cities.csv` for: airport, climate, pride_event, lgbtq_district, community_org, local_ndo.
+  - [x] 1.6 In `build.py`, load the new CSVs with the existing `load()` pattern; the build must succeed with empty files.
+  - [x] 1.7 In `tests.py`, add schema tests (headers present, enums valid, URLs start with `http`, dates are ISO) and source/as-of-required tests behind the `ENFORCED` flags (all off for now).
+  - [x] 1.8 Add a `warn()` helper and freshness checks (laws/politics 180 days, news 90 days, everything else 365) that print `WARN` but never fail the suite.
+  - [x] 1.9 Refresh stale `TODO.md` / `ROADMAP.md` facts (23 published, GA4 live, pricing conflict noted).
+  - [x] 1.10 Run build + full tests; commit.
+- [ ] 2.0 Source the existing un-sourced city fields for all 23 cities
+  - [ ] 2.1 Airports: for each city, nearest commercial airport (code, name), distance from a citable source (airport or official page); update `airport` and fill `airport_src` / `airport_asof`.
+  - [ ] 2.2 Climate: verify `summer_high_f` / `winter_low_f` against NOAA NCEI climate normals; source `hazard_flags` from FEMA's National Risk Index (or similar official source); fill `climate_src` / `climate_asof`.
+  - [ ] 2.3 Pride event, LGBTQ district, community org: confirm each from the organizer's, city's, or tourism board's own page and confirm the org is still active; fill the `_src` / `_asof` columns. Unverifiable → `VERIFY`.
+  - [ ] 2.4 Local ordinance status (`local_ndo`: yes/partial/no): verify against the city code, HRC MEI, or MAP; fill `local_ndo_src` / `_asof`.
+  - [ ] 2.5 Turn on the `ENFORCED` flags for these six groups in `tests.py`; build + tests.
+  - [ ] 2.6 In `build.py`, render a "Climate & getting there" section on city pages with a "Verified <Month Year> · Source" line per group; hide any `VERIFY` item.
+  - [ ] 2.7 Add tests: stamp and source link appear on every published city page; no `VERIFY` text renders. Build + tests; commit.
+- [ ] 3.0 Political climate data and section for all 23 cities/states
+  - [ ] 3.1 State level (23 states incl. DC): governor + party from the official state site; legislature control per chamber from the official legislature site, cross-checked on NCSL/Ballotpedia. Rows in `politics.csv`.
+  - [ ] 3.2 City level (23 cities): mayor + party from the official city site, or `nonpartisan` where the office is nonpartisan (never inferred); cross-check Ballotpedia. Disagreements → official site wins and a note is added; unresolved → `VERIFY`.
+  - [ ] 3.3 Notable enacted/pending LGBTQ-related legislation per state and municipal ordinances per city, sourced from the legislature/city code and MAP. Factual descriptions only.
+  - [ ] 3.4 Third-party ratings: HRC MEI score for each city HRC rates (source page, MEI year, as-of date). Unrated cities get no row.
+  - [ ] 3.5 Enable enforcement for `politics.csv` in `tests.py`; build + tests.
+  - [ ] 3.6 Render a "Local political climate" section: a plain table of offices, holders and parties, plus dated legislation/ordinance items and any third-party rating with attribution. No colors-as-labels, no adjectives.
+  - [ ] 3.7 Tests: no "red/blue/liberal/conservative/friendly" style labels in the section; nonpartisan mayors render correctly; any rating shows its source and year.
+  - [ ] 3.8 Build + tests; commit.
+- [ ] 4.0 LGBTQ+ places, events, and news, plus the "Pride this month" module
+  - [ ] 4.1 Places: 4–8 currently open LGBTQ+ bars, cafés, bookstores, centers, and health resources per city, each with an official URL; closed places recorded as `closed` (not rendered). Rows in `places.csv`.
+  - [ ] 4.2 Events: each city's local Pride plus other recurring LGBTQ+ events, with month and the organizer's URL. No exact dates unless the organizer states them. Rows in `events.csv`.
+  - [ ] 4.3 News: 2–5 recent, clearly LGBTQ+-relevant headlines per city (verbatim headline, named outlet, date, link only). Rows in `news.csv`.
+  - [ ] 4.4 Forum research for reader questions: read Reddit and similar communities to list what people really ask per city/topic; write only to `reports/reader-questions-2026-09.md` (unpublished) and use it to decide what to verify from primary sources. Check each site's terms first.
+  - [ ] 4.5 Enable enforcement for places/events/news in `tests.py`; build + tests.
+  - [ ] 4.6 Render the places, events, and news sections on city pages: outbound links with `rel="noopener"` and `data-ga` attributes, "last checked" stamps, older news aged out of view.
+  - [ ] 4.7 Homepage "Pride this month" module computed from the build month, falling back to the next upcoming month; deterministic in tests via a `BUILD_MONTH` override.
+  - [ ] 4.8 Tests: module output for fixed months; closed places never render; new links carry `data-ga`. Build + tests; commit.
+- [ ] 5.0 "What changed" feed and comparison pages
+  - [ ] 5.1 Seed `updates.csv` with real dated changes found during tasks 2–4 (each with a source URL).
+  - [ ] 5.2 Render the feed on the homepage and on each state/city page, newest first, limited length.
+  - [ ] 5.3 Choose ~20 city pairs by shared lifestyle tag and record them in `compare.csv`.
+  - [ ] 5.4 Build `/compare/<a>-vs-<b>.html` pages: side-by-side table from existing sourced fields, each row with its stamp, canonical URL, and sitemap entry.
+  - [ ] 5.5 Add "Compare with…" links from city pages to their comparison pages (with `data-ga`).
+  - [ ] 5.6 Tests: every `compare.csv` pair renders, both cities are published, no superlative wording, GA attributes present. Build + tests; commit.
+- [ ] 6.0 Freshness automation and launch verification
+  - [ ] 6.1 Make sitemap `lastmod` use the newest data date for each page rather than the build date.
+  - [ ] 6.2 Weekly rebuild: with Dylan's go-ahead, create a Netlify build hook (CLI or dashboard); Dylan adds it as a GitHub secret; write `.github/workflows/weekly-rebuild.yml` with a weekly cron.
+  - [ ] 6.3 Extend the `ga:` tests to cover every new link and CTA.
+  - [ ] 6.4 Ask Dylan, then push to `origin/main`; confirm the Netlify deploy is READY.
+  - [ ] 6.5 Verify the live site in Chrome: new sections render, stamps and source links work, comparison pages load, GA4 events fire.
+  - [ ] 6.6 Capture a GA4 engagement baseline (Dylan supplies numbers or access), refresh `TODO.md` / `ROADMAP.md`, run the full suite; final commit.

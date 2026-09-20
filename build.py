@@ -60,7 +60,20 @@ def load(name):
 states = {s["state_code"]: s for s in load("states.csv")}
 cities = load("cities.csv")
 city_by_slug = {c["slug"]: c for c in cities}
+# Two different price measures are in use; never label one as the other.
+PRICE_METRICS = {
+    "median_sale":   {"label": "Median sale price", "source": "Redfin", "short": "median"},
+    "typical_value": {"label": "Typical home value", "source": "Zillow", "short": "typical"},
+}
+def pm(c): return PRICE_METRICS[c["price_metric"]]
 agents = load("agents.csv")
+# Living-guide data (PRD 0001). Header-only files are valid; sections render only from verified rows.
+politics = load("politics.csv")
+places = load("places.csv")
+events = load("events.csv")
+news = load("news.csv")
+updates = load("updates.csv")
+compare = load("compare.csv")
 routes = load("routes.csv")
 collections = load("collections.csv")
 agents_by_market = {}
@@ -115,6 +128,7 @@ nav a:hover{border-bottom-color:var(--pop);background:var(--popt)}
 .pill{display:inline-block;text-decoration:none;border:2px solid var(--ink);background:var(--surface);color:var(--ink);border-radius:999px;padding:10px 16px;font:700 .92rem "Karla";box-shadow:2px 2px 0 rgba(30,26,43,.15)}
 .pill:hover{background:var(--poolt)}
 .pill:active{transform:translate(1px,1px);box-shadow:none}
+.tblnote{max-width:70ch;margin:-28px 0 40px;font-size:1rem;line-height:1.5}
 .swipehint{display:none;font-size:.8rem;font-weight:700;color:var(--mut);margin:0 0 8px}
 .tblwrap{position:relative;overflow-x:auto;border:2px solid var(--ink);border-radius:12px;background:var(--surface);margin:14px 0 44px;box-shadow:5px 5px 0 rgba(30,26,43,.12)}
 table{border-collapse:collapse;width:100%;font-size:.9rem;font-variant-numeric:tabular-nums}
@@ -279,6 +293,10 @@ collection_by_slug = {col["slug"]: col for col in collections}
 collection_counts = {col["slug"]: sum(1 for c in cities if matches(c, col["rule"])) for col in collections}
 
 # ---------- index ----------
+n_sale = sum(1 for c in cities if c["price_metric"] == "median_sale")
+n_typ = sum(1 for c in cities if c["price_metric"] == "typical_value")
+_asofs = sorted({c["price_asof"] for c in cities})
+price_asof_range = _asofs[0] if len(_asofs) == 1 else f"{_asofs[0]} to {_asofs[-1]}"
 rows = ""
 for c in sorted(cities, key=lambda x: (x["tier"], x["city_label"])):
     s = states[c["state_code"]]
@@ -288,7 +306,7 @@ for c in sorted(cities, key=lambda x: (x["tier"], x["city_label"])):
     rows += f"""<tr data-region="{e(c['region'])}" data-tier="{c['tier']}">
 <td><a href="city/{c['slug']}.html">{e(c['city_label'])}</a></td>
 <td data-v="{c['tier']}">Tier {c['tier']}</td>
-<td data-v="{c['median_price_usd']}">{price}</td>
+<td data-v="{c['median_price_usd']}">{price}<br><small>{pm(c)['label'].lower()}</small></td>
 <td>{lawbadge(s['housing_law'])}</td>
 <td>{ndo}</td>
 <td data-v="{tax}">{e(tax)}</td>
@@ -304,7 +322,7 @@ for t in ["1", "2", "3"]:
     cards = ""
     for c in [x for x in cities if x["tier"] == t]:
         price_k = f"${round(int(c['median_price_usd'])/1000)}K" if c['median_price_usd'] else "—"
-        cards += f"""<a class="card" href="city/{c['slug']}.html"><div class="pstamp"><small>median</small>{price_k}</div><h3>{e(c['city_label'])}</h3><p>{e(c['one_liner'])}</p><div class="m">{lawbadge(states[c['state_code']]['housing_law'])}</div></a>"""
+        cards += f"""<a class="card" href="city/{c['slug']}.html"><div class="pstamp" title="{pm(c)['label']} ({pm(c)['source']})"><small>{pm(c)['short']}</small>{price_k}</div><h3>{e(c['city_label'])}</h3><p>{e(c['one_liner'])}</p><div class="m">{lawbadge(states[c['state_code']]['housing_law'])}</div></a>"""
     tag, name = TIERS[t]
     tiercards += f'<section class="tier wrap"><h2><span class="tiertag">{tag}</span>{name}</h2><div class="cards">{cards}</div></section>'
 
@@ -345,8 +363,9 @@ index_body = f"""<div class="hero"><div class="arc" aria-hidden="true"></div><di
 <div class="controls">{chips}</div>
 <p class="swipehint">Swipe to see more columns →</p>
 <div class="tblwrap"><table id="mx"><thead><tr>
-<th>Place</th><th>Tier</th><th>Median price</th><th>State housing law</th><th>Local ordinance</th><th>Income tax</th><th>Climate</th><th>Region</th>
-</tr></thead><tbody>{rows}</tbody></table></div></section>
+<th>Place</th><th>Tier</th><th>Home price</th><th>State housing law</th><th>Local ordinance</th><th>Income tax</th><th>Climate</th><th>Region</th>
+</tr></thead><tbody>{rows}</tbody></table></div>
+<p class="tblnote">Prices come from two sources and are not the same measure: {n_sale} places show Redfin's median sale price; {n_typ} show Zillow's typical home value (a smoothed mid-tier estimate). Compare across the two with care. Prices as of {price_asof_range}.</p></section>
 <div class="wrap"><a class="cta" href="connect.html" data-ga="cta_click" data-ga-label="final_banner">Tell us what you're looking for →</a></div>
 <script>
 const tb=document.querySelector('#mx tbody');
@@ -372,7 +391,7 @@ for c in cities:
     price = f"${int(c['median_price_usd']):,}" if c["median_price_usd"] else "—"
     price_badge = "" if c["status"] == "published" else " <span class='b mid'>est.</span>"
     facts = [
-        ("Median home price", f"{price}{price_badge}"),
+        (f"{pm(c)['label']} ({pm(c)['source']})", f"{price}{price_badge}"),
         ("State housing law", lawbadge(s["housing_law"])),
         ("Public accommodations", lawbadge(s["pa_law"])),
         ("Local ordinance", e(c["local_ndo"])),
@@ -622,7 +641,7 @@ for r in routes:
 <div class="tblwrap"><table><thead><tr><th></th><th>{e(r['from_label'])}</th><th>{e(to['city_label'].split(',')[0])}</th></tr></thead><tbody>
 <tr><td>State housing law</td><td>{fromlaw}</td><td>{lawbadge(ts['housing_law'])}</td></tr>
 <tr><td>State income tax</td><td>{e(fromtax)}</td><td>{e(taxline(to['state_code']))}</td></tr>
-<tr><td>Median home price</td><td>—</td><td>${int(to['median_price_usd']):,} <span class="b mid">est.</span></td></tr>
+<tr><td>{pm(to)['label']} ({pm(to)['source']})</td><td>—</td><td>${int(to['median_price_usd']):,} <span class="b mid">est.</span></td></tr>
 <tr><td>Summer / winter</td><td>—</td><td>{e(to['summer_high_f'])}° / {e(to['winter_low_f'])}°</td></tr>
 <tr><td>Community anchor</td><td>—</td><td>{e(to['community_org'])}</td></tr></tbody></table></div>
 <h2>The receiving end</h2>
@@ -639,7 +658,7 @@ for col in collections:
     cards = ""
     for c in hits:
         pk = f"${round(int(c['median_price_usd'])/1000)}K"
-        cards += f"""<a class="card" href="../city/{c['slug']}.html"><div class="pstamp"><small>median</small>{pk}</div><h3>{e(c['city_label'])}</h3><p>{e(c['one_liner'])}</p></a>"""
+        cards += f"""<a class="card" href="../city/{c['slug']}.html"><div class="pstamp" title="{pm(c)['label']} ({pm(c)['source']})"><small>{pm(c)['short']}</small>{pk}</div><h3>{e(c['city_label'])}</h3><p>{e(c['one_liner'])}</p></a>"""
     cb = f"""<div class="hero"><div class="arc" aria-hidden="true"></div><div class="wrap">
 <div class="kicker">The list</div><h1>{e(col['title'])}</h1><p>{e(col['blurb'])} <strong>{len(hits)} places qualify</strong> — computed straight from the index, not opinions.</p>
 <span class="stamp">Auto-generated from verified data</span></div></div>

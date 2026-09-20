@@ -26,6 +26,9 @@ check("data: lifestyle_tags use known vocabulary only", all(
 check("data: every legal row has src+asof", all(s["law_src"].startswith("http") and s["law_asof"] for s in states.values()))
 check("data: every published city has sourced price", all(c["price_src"].startswith("http") and "VERIFY" not in c["price_asof"] for c in cities if c["status"]=="published"))
 check("data: prices are integers", all(c["median_price_usd"].isdigit() for c in cities))
+check("data: price_metric valid and matches the cited source (Redfin=median_sale, Zillow=typical_value)", all(
+    c["price_metric"] == ("median_sale" if "redfin.com" in c["price_src"] else "typical_value") and
+    ("redfin.com" in c["price_src"] or "zillow" in c["price_src"]) for c in cities))
 check("data: any city with a hero image has alt text (a11y)", all(
     bool(c.get("hero_image_alt","").strip()) for c in cities if c.get("hero_image_url","").strip()))
 
@@ -167,6 +170,98 @@ draft_ok = all(("Status: DRAFT" in open(os.path.join(DIST,"city",c["slug"]+".htm
 check("integrity: draft stamp matches data status on every city page", draft_ok)
 check("integrity: no placeholder emails shipped", "example.com?subject" not in open(os.path.join(DIST,"connect.html")).read())
 
+# price measure labeling: never call a Zillow typical value a "median"
+_LBL = {"median_sale": "Median sale price (Redfin)", "typical_value": "Typical home value (Zillow)"}
+def _city_html(c): return open(os.path.join(DIST,"city",c["slug"]+".html")).read()
+check("integrity: each city page labels its price with the correct measure and source",
+      all(_LBL[c["price_metric"]] in _city_html(c) for c in cities))
+check("integrity: no city page calls a Zillow typical value a 'Median home price'",
+      all("Median home price" not in _city_html(c) for c in cities))
+check("integrity: index explains the two price measures", "not the same measure" in open(os.path.join(DIST,"index.html")).read())
+
+# ---------- 7. Living-guide data (PRD 0001) ----------
+import datetime
+WARNINGS = []
+def warn(name, cond, detail=""):
+    """Non-fatal check: prints WARN, never fails the suite (freshness is advisory)."""
+    print(("PASS " if cond else "WARN ") + name + (f" — {detail}" if detail and not cond else ""))
+    if not cond: WARNINGS.append(name)
+
+def load_csv(name): return list(csv.DictReader(open(os.path.join("data", name), newline="", encoding="utf-8")))
+def header(name): return next(csv.reader(open(os.path.join("data", name), newline="", encoding="utf-8")))
+def parse_asof(v):
+    """Accepts YYYY-MM or YYYY-MM-DD; returns a date or None."""
+    m = re.fullmatch(r"(\d{4})-(\d{2})(?:-(\d{2}))?", (v or "").strip())
+    if not m: return None
+    try: return datetime.date(int(m[1]), int(m[2]), int(m[3] or 1))
+    except ValueError: return None
+def is_url(v): return (v or "").strip().startswith("http")
+
+politics = load_csv("politics.csv"); places = load_csv("places.csv"); events = load_csv("events.csv")
+news = load_csv("news.csv"); updates = load_csv("updates.csv"); compare = load_csv("compare.csv")
+
+SCHEMAS = {
+    "politics.csv": ["scope","slug_or_code","item","value","party","notes","source_url","asof"],
+    "places.csv": ["city_slug","name","type","url","source","verified_asof","status"],
+    "events.csv": ["city_slug","name","month","typical_weeks","url","source","verified_asof"],
+    "news.csv": ["city_slug","date","outlet","headline","url","kind"],
+    "updates.csv": ["date","scope","slug","headline","source_url"],
+    "compare.csv": ["slug_a","slug_b","reason"],
+}
+check("living: new CSV headers match the PRD schema", all(header(n) == h for n, h in SCHEMAS.items()))
+
+slugs = {c["slug"] for c in cities}
+MONTHS = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"}
+check("living: politics enums valid", all(r["scope"] in {"state","city"} and
+      r["item"] in {"governor","legislature_upper","legislature_lower","mayor","ordinance","legislation","rating"} for r in politics))
+check("living: politics rows reference real states/cities", all(
+      (r["slug_or_code"] in states) if r["scope"] == "state" else (r["slug_or_code"] in slugs) for r in politics))
+check("living: places enums valid and reference real cities", all(
+      r["city_slug"] in slugs and r["type"] in {"bar","cafe","bookstore","center","health","other"} and
+      r["status"] in {"open","closed","VERIFY"} for r in places))
+check("living: events months valid and reference real cities", all(
+      r["city_slug"] in slugs and r["month"] in MONTHS for r in events))
+check("living: news kinds valid and reference real cities", all(
+      r["city_slug"] in slugs and r["kind"] in {"pride","legal","community","other"} for r in news))
+check("living: updates scope valid", all(r["scope"] in {"state","city","site"} for r in updates))
+check("living: compare pairs reference distinct real cities", all(
+      r["slug_a"] in slugs and r["slug_b"] in slugs and r["slug_a"] != r["slug_b"] for r in compare))
+check("living: every populated row has an http source/link and a named source where required", all(
+      is_url(r["source_url"]) for r in politics + updates) and all(
+      is_url(r["url"]) and r["source"].strip() for r in places + events) and all(
+      is_url(r["url"]) and r["outlet"].strip() and r["headline"].strip() for r in news))
+check("living: every populated date is ISO (YYYY-MM or YYYY-MM-DD)", all(
+      parse_asof(r["asof"]) for r in politics) and all(parse_asof(r["verified_asof"]) for r in places + events) and all(
+      parse_asof(r["date"]) for r in news + updates))
+
+# Source + as-of enforcement per fact group. Flip a group to True once its research pass is complete.
+ENFORCED = {"airport": False, "climate": False, "pride_event": False,
+            "lgbtq_district": False, "community_org": False, "local_ndo": False}
+def real(v): return bool(v.strip()) and "VERIFY" not in v
+for g, on in ENFORCED.items():
+    ok = all(is_url(c[g+"_src"]) and parse_asof(c[g+"_asof"]) for c in cities
+             if c["status"] == "published" and real(c[g]))
+    if on: check(f"living: every published city has {g} source + as-of", ok)
+    else: print(f"SKIP living: {g} source/as-of not enforced yet")
+
+# Freshness (advisory only): laws/politics 180d, news 90d, everything else 365d.
+TODAY = datetime.date.today()
+def stale(v, days):
+    d = parse_asof(v); return bool(d) and (TODAY - d).days > days
+for g in ENFORCED:
+    warn(f"fresh: {g} as-of within 365 days", not any(stale(c[g+"_asof"], 365) for c in cities))
+warn("fresh: political rows within 180 days", not any(stale(r["asof"], 180) for r in politics))
+_newest_news = {}
+for r in news:
+    d = parse_asof(r["date"])
+    if d and (r["city_slug"] not in _newest_news or d > _newest_news[r["city_slug"]]): _newest_news[r["city_slug"]] = d
+warn("fresh: each city's newest news item is within 90 days",
+     all((TODAY - d).days <= 90 for d in _newest_news.values()),
+     ", ".join(sorted(k for k, d in _newest_news.items() if (TODAY - d).days > 90)))
+warn("fresh: places/events verified within 365 days", not any(stale(r["verified_asof"], 365) for r in places + events))
+warn("fresh: state law rows within 180 days", not any(stale(s["law_asof"], 180) for s in states.values()))
+warn("fresh: city prices within 180 days", not any(stale(c["price_asof"], 180) for c in cities))
+
 print()
-print(f"{'ALL TESTS PASSED' if not FAIL else str(len(FAIL))+' FAILURES: '+', '.join(FAIL)}")
+print(f"{'ALL TESTS PASSED' if not FAIL else str(len(FAIL))+' FAILURES: '+', '.join(FAIL)}" + (f" ({len(WARNINGS)} freshness warning(s))" if WARNINGS else ""))
 sys.exit(1 if FAIL else 0)
