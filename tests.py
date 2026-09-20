@@ -250,10 +250,23 @@ check("living: unverified fields never carry a source (no orphan src on VERIFY v
       if not any(real(c[k]) for k in GROUP_COLS.get(g, [g]))))
 def _html(c): return open(os.path.join(DIST, "city", c["slug"]+".html")).read()
 check("living: no VERIFY placeholder text renders on any city page", all("VERIFY" not in _html(c) for c in cities))
-check("living: verified climate/airport show a Verified stamp with the source link", all(
-      ("Verified" in _html(c)) and
+check("living: verified climate/airport show an As-of stamp with the source link", all(
+      ("As of" in _html(c)) and
       all(html.escape(c[g+"_src"].split(";")[0].strip()) in _html(c) for g in ("airport", "climate") if is_url(c[g+"_src"]))
       for c in cities))
+
+# political climate section: facts only, third-party ratings attributed
+def _pol(c):
+    h = _html(c); i = h.find('id="politics"')
+    return h[i:h.find("</section>", i)] if i >= 0 else ""
+check("living: every published city page has a political climate section with a governor/office table",
+      all("Local political climate" in _pol(c) and "<th>Office</th>" in _pol(c) for c in cities))
+_LABELS = re.compile(r"\b(liberal|conservative|progressive|hostile|friendly|welcoming|purple|red (state|city)|blue (state|city))\b", re.I)
+check("living: political section carries no partisan/character labels", all(not _LABELS.search(re.sub(r"<[^>]+>", " ", _pol(c))) for c in cities))
+check("living: every third-party rating names its publisher and year", all(
+      ("Human Rights Campaign" in r["notes"] and re.search(r"\b20\d\d\b", r["value"])) for r in politics if r["item"] == "rating"))
+check("living: rating rows carry a source and as-of", all(is_url(r["source_url"]) and parse_asof(r["asof"]) for r in politics if r["item"] == "rating"))
+check("living: every mayor/governor row lists a party value (party or Nonpartisan or VERIFY)", all(r["party"].strip() for r in politics if r["item"] in ("mayor", "governor")))
 
 # Freshness (advisory only): laws/politics 180d, news 90d, everything else 365d.
 TODAY = datetime.date.today()
@@ -261,7 +274,8 @@ def stale(v, days):
     d = parse_asof(v); return bool(d) and (TODAY - d).days > days
 for g in ENFORCED:
     warn(f"fresh: {g} as-of within 365 days", not any(stale(c[g+"_asof"], 365) for c in cities))
-warn("fresh: political rows within 180 days", not any(stale(r["asof"], 180) for r in politics))
+warn("fresh: political rows within 180 days (annual third-party ratings: 400 days)", not any(stale(r["asof"], 400 if r["item"] == "rating" else 180) for r in politics),
+     ", ".join(sorted({f"{r['slug_or_code']}/{r['item']}" for r in politics if stale(r["asof"], 400 if r["item"] == "rating" else 180)})))
 _newest_news = {}
 for r in news:
     d = parse_asof(r["date"])

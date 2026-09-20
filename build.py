@@ -76,16 +76,21 @@ def fmt_asof(v):
 def src_urls(src): return [u.strip() for u in (src or "").split(";") if u.strip().startswith("http")]
 SRC_LABELS = {"ncei.noaa.gov": "NOAA normals", "services.arcgis.com": "FEMA National Risk Index",
               "fema.gov": "FEMA", "hazards.fema.gov": "FEMA National Risk Index", "ncsl.org": "NCSL", "ballotpedia.org": "Ballotpedia",
-              "airnav.com": "AirNav (FAA data)", "hrc.org": "HRC", "reddit.com": "reddit.com"}
+              "airnav.com": "AirNav (FAA data)", "hrc.org": "HRC", "hrc-prod-requests.s3-us-west-2.amazonaws.com": "HRC scorecard"}
 def host(u):
     h = re.sub(r"^https?://(www\.)?", "", u).split("/")[0]
     return SRC_LABELS.get(h, h)
 def stamp(src, asof, label=""):
-    """'Verified Aug 2026 · noaa.gov' with real links; empty when the source or date is missing."""
+    """'As of Aug 2026 · NOAA normals' with real links; empty when the source or date is missing."""
     urls, when = src_urls(src), fmt_asof(asof)
     if not urls or not when: return ""
-    links = " · ".join(f'<a href="{e(u)}" rel="noopener" data-ga="source_click" data-ga-label="{e(label)}">{e(host(u))}</a>' for u in urls)
-    return f'<span class="vstamp">Verified {when} · {links}</span>'
+    seen, parts = {}, []
+    for u in urls:
+        name = host(u); seen[name] = seen.get(name, 0) + 1
+        text = name if seen[name] == 1 else f"{name} ({seen[name]})"
+        parts.append(f'<a href="{e(u)}" rel="noopener" data-ga="source_click" data-ga-label="{e(label)}">{e(text)}</a>')
+    links = " · ".join(parts)
+    return f'<span class="vstamp">As of {when} · {links}</span>'
 def verified(v, src, asof):
     """A fact is shown only when it has a real value, a source link, and a valid date."""
     return bool(v and v.strip()) and "VERIFY" not in v and bool(src_urls(src)) and bool(fmt_asof(asof))
@@ -143,6 +148,9 @@ nav a:hover{border-bottom-color:var(--pop);background:var(--popt)}
 @media(max-width:860px){.arc{width:240px;height:120px;opacity:.35;right:-30px}}
 @media(max-width:600px){.arc{display:none}}
 .kicker{font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:var(--coral);font-weight:700;margin-bottom:12px}
+.muted{color:var(--mut);font-size:.9em}
+.vlist{padding-left:1.1em;margin:8px 0 18px}
+.vlist li{margin-bottom:10px}
 .vstamp{display:block;font-size:.85rem;color:var(--mut);margin-top:4px}
 .vstamp a{color:var(--mut)}
 .stamp{display:inline-block;border:2px solid var(--ink);border-radius:999px;padding:5px 16px;font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--ink);opacity:.72;transform:rotate(-2deg);margin-top:18px;background:var(--surface)}
@@ -317,6 +325,49 @@ def matches(c, rule):
 collection_by_slug = {col["slug"]: col for col in collections}
 collection_counts = {col["slug"]: sum(1 for c in cities if matches(c, col["rule"])) for col in collections}
 
+# ---------- political climate: who holds office + what the law says (facts only, no labels) ----------
+def pol(scope, code, item): return [p for p in politics if p["scope"] == scope and p["slug_or_code"] == code and p["item"] == item]
+PARTIES = {"Democratic", "Republican", "Independent", "Libertarian", "Green"}
+def holder_text(p):
+    """Name plus party only where a source states it; nonpartisan offices are described, not guessed."""
+    party = p["party"]
+    if party in PARTIES: return f"{e(p['value'])} ({e(party)})"
+    if party == "Nonpartisan": return f"{e(p['value'])} <span class='muted'>(nonpartisan office; no party listed by Ballotpedia)</span>"
+    return f"{e(p['value'])} <span class='muted'>(party not confirmed by the sources we checked)</span>"
+def control_text(p):
+    label, _, counts = p["value"].partition(":")
+    party = p["party"]
+    ctl = f"{party.split(' ')[0]} plurality" if "plurality" in party else f"{party} majority"
+    return label.strip(), (f"{e(ctl)} · {e(counts.strip())}" if counts.strip() else e(ctl))
+def politics_block(c):
+    code = c["state_code"]; rows = []
+    for p in pol("state", code, "governor"):
+        label = "Mayor of D.C." if "Mayor of DC" in p["value"] else "Governor"
+        val = holder_text({**p, "value": p["value"].replace(" (Mayor of DC)", "")})
+        rows.append((label, val, stamp(p["source_url"], p["asof"], "politics")))
+    for item in ("legislature_upper", "legislature_lower"):
+        for p in pol("state", code, item):
+            label, txt = control_text(p) if code != "DC" else ("D.C. Council", e(p["value"].split(":", 1)[1].strip()))
+            rows.append((f"Legislature — {label}" if code != "DC" else label, txt, stamp(p["source_url"], p["asof"], "politics")))
+    for p in pol("city", c["slug"], "mayor"):
+        m = re.search(r"\((Mayor of [^)]+|[^)]*)\)$", p["value"])
+        note = "; ".join(f for f in (x.strip() for x in p["notes"].split(";")) if f and not f.startswith("Party per") and "party not stated" not in f.lower() and "party not listed" not in f.lower())
+        rows.append(("Local leadership", holder_text(p) + (f"<br><small>{e(note)}</small>" if note else ""), stamp(p["source_url"], p["asof"], "politics")))
+    table = ""
+    if rows:
+        body_rows = "".join(f"<tr><td>{e(a)}</td><td>{b}</td><td>{d}</td></tr>" for a, b, d in rows)
+        table = f'<div class="tblwrap"><table><thead><tr><th>Office</th><th>Who holds it</th><th>Source</th></tr></thead><tbody>{body_rows}</tbody></table></div>'
+    items = []
+    for p in pol("city", c["slug"], "ordinance"): items.append(f"<li>{e(p['value'])}{stamp(p['source_url'], p['asof'], 'politics')}</li>")
+    for p in pol("city", c["slug"], "rating"): items.append(f"<li>{e(p['value'])} — {e(p['notes'])}.{stamp(p['source_url'], p['asof'], 'rating')}</li>")
+    for p in pol("city", c["slug"], "legislation"): items.append(f"<li>{e(p['value'])}{stamp(p['source_url'], p['asof'], 'politics')}</li>")
+    for p in pol("state", code, "legislation")[:3]: items.append(f"<li><strong>{e(states[code]['state_name'])}:</strong> {e(p['value'])}{stamp(p['source_url'], p['asof'], 'politics')}</li>")
+    lst = f"<h3>Protections and recent actions</h3><ul class='vlist'>{''.join(items)}</ul>" if items else ""
+    if not table and not lst: return ""
+    return ('<section id="politics"><h2>Local political climate</h2>'
+            '<p>Who holds office right now and what recent action looks like, with sources. We report facts and leave the conclusions to you; party is shown only where a source states it.</p>'
+            f'{table}{lst}</section>')
+
 # ---------- index ----------
 n_sale = sum(1 for c in cities if c["price_metric"] == "median_sale")
 n_typ = sum(1 for c in cities if c["price_metric"] == "typical_value")
@@ -468,6 +519,7 @@ for c in cities:
     if c["walkability"]:
         living.append(f"<p><strong>Walkability:</strong> {e(c['walkability'])}.</p>")
     living_block = "".join(living)
+    politics_html = politics_block(c)
     body = f"""<div class="cityhead"><div class="wrap">
 <div class="kicker">{e(c['region'])} · Tier {c['tier']}</div>
 <h1>{e(c['city_label'])}</h1><p style="max-width:60ch;margin-top:10px">{e(c['one_liner'])}</p>
@@ -482,6 +534,7 @@ for c in cities:
 <p>{org_sentence}{e(c['senior_lgbtq_asset'])}. HIV/LGBTQ-competent care: {e(c['hiv_care'])}.</p>
 <h2>Climate &amp; getting there</h2>
 {living_block}
+{politics_html}
 {{straight_talk}}
 {{agent_block}}
 {{draft_note}}

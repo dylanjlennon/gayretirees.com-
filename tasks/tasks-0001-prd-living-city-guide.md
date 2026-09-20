@@ -20,7 +20,7 @@
 
 ### Notes
 
-- 2026-09-20: first research pass covered 23 cities; a gap-fill wave targets remaining `VERIFY` fields (districts, ordinance status, mayors' parties, thin place lists). Re-ingest is idempotent.
+- 2026-09-20: first research pass covered 23 cities; a gap-fill wave targets remaining `VERIFY` fields (districts, ordinance status, mayors' parties, thin place lists). Re-ingest is idempotent. Stamp wording is "As of <Mon Year>" (the source's data date), not "Verified".
 - Loop for every change: edit CSV or `build.py` → `python3 build.py` → `python3 tests.py`. Never hand-edit `dist/`.
 - Research rule: every fact needs a source URL and an as-of date; unknown = blank + `VERIFY`. No guessing.
 - Forums (Reddit etc.) are for discovering questions only — never quoted, never cited as fact, never bulk-scraped.
@@ -50,15 +50,15 @@
   - [x] 2.5 Turn on the `ENFORCED` flags for these six groups in `tests.py`; build + tests.
   - [x] 2.6 In `build.py`, render a "Climate & getting there" section on city pages with a "Verified <Month Year> · Source" line per group; hide any `VERIFY` item.
   - [x] 2.7 Add tests: stamp and source link appear on every published city page; no `VERIFY` text renders. Build + tests; commit.
-- [ ] 3.0 Political climate data and section for all 23 cities/states
-  - [ ] 3.1 State level (23 states incl. DC): governor + party from the official state site; legislature control per chamber from the official legislature site, cross-checked on NCSL/Ballotpedia. Rows in `politics.csv`.
-  - [ ] 3.2 City level (23 cities): mayor + party from the official city site, or `nonpartisan` where the office is nonpartisan (never inferred); cross-check Ballotpedia. Disagreements → official site wins and a note is added; unresolved → `VERIFY`.
-  - [ ] 3.3 Notable enacted/pending LGBTQ-related legislation per state and municipal ordinances per city, sourced from the legislature/city code and MAP. Factual descriptions only.
-  - [ ] 3.4 Third-party ratings: HRC MEI score for each city HRC rates (source page, MEI year, as-of date). Unrated cities get no row.
-  - [ ] 3.5 Enable enforcement for `politics.csv` in `tests.py`; build + tests.
-  - [ ] 3.6 Render a "Local political climate" section: a plain table of offices, holders and parties, plus dated legislation/ordinance items and any third-party rating with attribution. No colors-as-labels, no adjectives.
-  - [ ] 3.7 Tests: no "red/blue/liberal/conservative/friendly" style labels in the section; nonpartisan mayors render correctly; any rating shows its source and year.
-  - [ ] 3.8 Build + tests; commit.
+- [x] 3.0 Political climate data and section for all 23 cities/states
+  - [x] 3.1 State level (23 states incl. DC): governor + party from the official state site; legislature control per chamber from the official legislature site, cross-checked on NCSL/Ballotpedia. Rows in `politics.csv`.
+  - [x] 3.2 City level (23 cities): mayor + party from the official city site, or `nonpartisan` where the office is nonpartisan (never inferred); cross-check Ballotpedia. Disagreements → official site wins and a note is added; unresolved → `VERIFY`.
+  - [x] 3.3 Notable enacted/pending LGBTQ-related legislation per state and municipal ordinances per city, sourced from the legislature/city code and MAP. Factual descriptions only.
+  - [x] 3.4 Third-party ratings: HRC MEI score for each city HRC rates (source page, MEI year, as-of date). Unrated cities get no row.
+  - [x] 3.5 Enable enforcement for `politics.csv` in `tests.py`; build + tests.
+  - [x] 3.6 Render a "Local political climate" section: a plain table of offices, holders and parties, plus dated legislation/ordinance items and any third-party rating with attribution. No colors-as-labels, no adjectives.
+  - [x] 3.7 Tests: no "red/blue/liberal/conservative/friendly" style labels in the section; nonpartisan mayors render correctly; any rating shows its source and year.
+  - [x] 3.8 Build + tests; commit.
 - [ ] 4.0 LGBTQ+ places, events, and news, plus the "Pride this month" module
   - [ ] 4.1 Places: 4–8 currently open LGBTQ+ bars, cafés, bookstores, centers, and health resources per city, each with an official URL; closed places recorded as `closed` (not rendered). Rows in `places.csv`.
   - [ ] 4.2 Events: each city's local Pride plus other recurring LGBTQ+ events, with month and the organizer's URL. No exact dates unless the organizer states them. Rows in `events.csv`.
