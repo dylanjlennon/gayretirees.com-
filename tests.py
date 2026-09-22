@@ -297,7 +297,7 @@ check("living: Pride module event links carry data-ga", 'data-ga="event_click"' 
 
 # comparison pages + feed
 _cmp_ok = True; _cmp_ga = []; _cmp_ban = []
-_BANW = re.compile(r"\b(best|largest|safest|top|leading|greatest|friendliest|#1)\b", re.I)
+_BANW = re.compile(r"\b(best|largest|safest|top|leading|greatest|friendliest|#1)\b|capital of|nowhere else|no other (city|place|town)|unrivaled|unmatched", re.I)
 cities_by_slug = {c["slug"]: c for c in cities}
 for r in compare:
     f = os.path.join(DIST, "compare", f"{r['slug_a']}-vs-{r['slug_b']}.html")
@@ -336,6 +336,9 @@ _CLAIMS = re.compile(r"second-gayest|america's first|country's first|first [a-z\
 check("copy: no unsourced 'first'/ranking claims or agent-side jargon in one-liners and editorial notes",
       not [c["slug"] for c in cities if _CLAIMS.search(c["one_liner"] + " " + c["editorial_note"])],
       ", ".join(c["slug"] for c in cities if _CLAIMS.search(c["one_liner"] + " " + c["editorial_note"])))
+check("copy: no unsourced superlative wording in one-liners or editorial notes (CLAUDE.md: our own rankings/superlatives stay banned)",
+      not [c["slug"] for c in cities if _BANW.search(c["one_liner"] + " " + c["editorial_note"])],
+      ", ".join(c["slug"] for c in cities if _BANW.search(c["one_liner"] + " " + c["editorial_note"])))
 
 # Freshness (advisory only): laws/politics 180d, news 90d, everything else 365d.
 TODAY = datetime.date.today()
