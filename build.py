@@ -505,7 +505,8 @@ for t in ["1", "2", "3"]:
     cards = ""
     for c in [x for x in cities if x["tier"] == t]:
         price_k = f"${round(int(c['median_price_usd'])/1000)}K" if c['median_price_usd'] else "—"
-        cards += f"""<a class="card" href="city/{c['slug']}.html"><div class="pstamp" title="{pm(c)['label']} ({pm(c)['source']})"><small>{pm(c)['short']}</small>{price_k}</div><h3>{e(c['city_label'])}</h3><p>{e(c['one_liner'])}</p><div class="m">{lawbadge(states[c['state_code']]['housing_law'])}</div></a>"""
+        draft_badge = ' <span class="b mid">draft</span>' if c["status"] != "published" else ""
+        cards += f"""<a class="card" href="city/{c['slug']}.html"><div class="pstamp" title="{pm(c)['label']} ({pm(c)['source']})"><small>{pm(c)['short']}</small>{price_k}</div><h3>{e(c['city_label'])}{draft_badge}</h3><p>{e(c['one_liner'])}</p><div class="m">{lawbadge(states[c['state_code']]['housing_law'])}</div></a>"""
     tag, name = TIERS[t]
     tiercards += f'<section class="tier wrap"><h2><span class="tiertag">{tag}</span>{name}</h2><div class="cards">{cards}</div></section>'
 
@@ -521,6 +522,7 @@ for slug in QUICK_FILTERS:
     quick_pills += f"""<a class="pill" href="best/{slug}.html" data-ga="quicklist_click" data-ga-label="{e(slug)}">{e(col['title'])} · {n}</a>"""
 
 latest_reviewed = max((c["last_reviewed"] for c in cities if c["last_reviewed"]), default="")
+published_count = sum(1 for c in cities if c["status"] == "published")
 unpublished = any(c["status"] != "published" for c in cities)
 index_stamp = (f"Data status: {'partially published' if unpublished else 'published'} "
     f"· last reviewed {e(latest_reviewed)} · legal data via Movement Advancement Project")
@@ -529,7 +531,7 @@ changes_html = ("<section class=\"tier wrap\">" + feed_block(updates, 6, "What c
 index_body = f"""<div class="hero"><div class="arc" aria-hidden="true"></div><div class="wrap">
 <div class="kicker">For people who get to choose</div>
 <h1>Your next chapter, your terms.</h1>
-<p>You've spent a career deciding things — this one's no different. Twenty-three places LGBTQ+ people are actually choosing for retirement, laid out by the lifestyle you're designing: walkable and social, beach-town slow, mountain quiet, big-city amenities. Start with the life you want below, or skip straight to the full comparison table. Every fact is sourced and dated either way.</p>
+<p>You've spent a career deciding things — this one's no different. {published_count} places LGBTQ+ people are actually choosing for retirement, laid out by the lifestyle you're designing: walkable and social, beach-town slow, mountain quiet, big-city amenities. Start with the life you want below, or skip straight to the full comparison table. Every fact is sourced and dated either way.</p>
 <span class="stamp">{index_stamp}</span>
 </div></div>
 <section class="tier wrap" id="browse"><div class="kicker">Start here</div><h2>What's the vibe you're picturing?</h2>
@@ -791,7 +793,7 @@ os.makedirs(DIST, exist_ok=True)
 with open(os.path.join(DIST, "style.css"), "w") as f: f.write(CSS)
 with open(os.path.join(DIST, "analytics.js"), "w") as f: f.write(ANALYTICS_JS)
 with open(os.path.join(DIST, "index.html"), "w") as f:
-    f.write(page("GayRetirees.com — 23 places, browse by lifestyle", index_body, "index.html", desc="Where LGBTQ+ people actually retire, browsable by lifestyle or laid out side by side: laws, taxes, prices, healthcare, climate."))
+    f.write(page(f"GayRetirees.com — {published_count} places, browse by lifestyle", index_body, "index.html", desc="Where LGBTQ+ people actually retire, browsable by lifestyle or laid out side by side: laws, taxes, prices, healthcare, climate."))
 with open(os.path.join(DIST, "states.html"), "w") as f: f.write(page("State laws & taxes — GayRetirees.com", states_body, "states.html", desc="State-by-state housing law, public-accommodations law, LTC protections, and tax treatment for every place on GayRetirees.com, sourced from the Movement Advancement Project."))
 with open(os.path.join(DIST, "methodology.html"), "w") as f: f.write(page("Methodology — GayRetirees.com", meth_body, "methodology.html", desc="How GayRetirees.com sources, dates, and verifies every legal, tax, price, and community fact behind the index."))
 with open(os.path.join(DIST, "connect.html"), "w") as f: f.write(page("Talk to us — GayRetirees.com", conn_body, "connect.html", desc="Tell us which cities you're considering and what you're trying to do. We'll connect you with a vetted, licensed agent in the market you choose."))

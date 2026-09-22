@@ -12,7 +12,7 @@ def check(name, cond, detail=""):
 # ---------- 1. Data integrity ----------
 states = {r["state_code"]: r for r in csv.DictReader(open("data/states.csv"))}
 cities = list(csv.DictReader(open("data/cities.csv")))
-check("data: 23 cities", len(cities) == 23)
+check("data: 26 cities", len(cities) == 26)
 check("data: unique slugs", len({c["slug"] for c in cities}) == len(cities))
 check("data: every city state_code resolves", all(c["state_code"] in states for c in cities))
 check("data: tiers valid", all(c["tier"] in {"1","2","3"} for c in cities))
@@ -79,7 +79,7 @@ check("form: intake form present with data-netlify", any("data-netlify" in f for
 check("form: hidden form-name field (required by Netlify)", any(i.get("name")=="form-name" and i.get("value")=="relocation-intake" for i in cp.inputs))
 check("form: honeypot configured", any(f.get("netlify-honeypot")=="bot-field" for f in cp.forms) and any(i.get("name")=="bot-field" for i in cp.inputs))
 check("form: posts to existing thanks page", any(f.get("action","").startswith("thanks.html") for f in cp.forms) and os.path.exists(os.path.join(DIST,"thanks.html")))
-check("form: markets are client-selected checkboxes (steering guardrail)", sum(1 for i in cp.inputs if i.get("name")=="markets")==24)
+check("form: markets are client-selected checkboxes (steering guardrail)", sum(1 for i in cp.inputs if i.get("name")=="markets")==len(cities)+1)
 check("form: required fields marked", any(i.get("name")=="name" and "required" in i for i in cp.inputs) and any(i.get("name")=="email" and "required" in i for i in cp.inputs))
 labeled = all(i.get("id") in cp.labels for i in cp.inputs if i.get("id") and i.get("type")!="hidden")
 check("form: a11y — every visible field has a label", labeled)
@@ -132,12 +132,12 @@ try:
         with urllib.request.urlopen(f"http://127.0.0.1:8901/{pth}") as r: codes[pth]=r.status
     check(f"e2e: all {len(expected)} pages serve HTTP 200", all(v==200 for v in codes.values()))
     home = urllib.request.urlopen("http://127.0.0.1:8901/index.html").read().decode()
-    check("e2e: matrix renders all 23 rows", home.count('data-region=')==23)
+    check("e2e: matrix renders all rows", home.count('data-region=')==len(cities))
     check("e2e: sort/filter script shipped", "localeCompare" in home and "dataset.r" in home)
     css = urllib.request.urlopen("http://127.0.0.1:8901/style.css").read().decode()
     check("e2e: stylesheet non-empty and served", len(css) > 2000)
     sm = urllib.request.urlopen("http://127.0.0.1:8901/sitemap.xml").read().decode()
-    check("e2e: sitemap lists all indexable pages", sm.count("<url>")==28+sum(1 for a in agents if a["status"]=="active")+len(routes)+len(cols)+len(list(csv.DictReader(open("data/compare.csv")))))
+    check("e2e: sitemap lists all indexable pages", sm.count("<url>")==5+len(cities)+sum(1 for a in agents if a["status"]=="active")+len(routes)+len(cols)+len(list(csv.DictReader(open("data/compare.csv")))))
 finally:
     srv.terminate()
 
