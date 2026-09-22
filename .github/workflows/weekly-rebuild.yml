@@ -1,0 +1,17 @@
+# Rebuilds the site weekly so month-based content ("Pride this month") stays correct.
+# Needs one repository secret: NETLIFY_BUILD_HOOK_URL (Netlify → Site configuration → Build hooks).
+name: Weekly rebuild
+on:
+  schedule:
+    - cron: "0 12 * * 1"   # Mondays 12:00 UTC
+  workflow_dispatch: {}
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Netlify build
+        env:
+          HOOK: ${{ secrets.NETLIFY_BUILD_HOOK_URL }}
+        run: |
+          if [ -z "$HOOK" ]; then echo "NETLIFY_BUILD_HOOK_URL secret is not set"; exit 1; fi
+          curl -fsS -X POST -d '{}' "$HOOK"
