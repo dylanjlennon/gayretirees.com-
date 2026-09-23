@@ -181,7 +181,7 @@ td a{font-weight:700;text-decoration:none;color:var(--pool)}
 @media(max-width:760px){
   .swipehint{display:block}
   .tblwrap::after{content:'';position:absolute;top:0;right:0;bottom:0;width:26px;background:linear-gradient(to right,transparent,var(--surface));pointer-events:none}
-  table th:nth-child(2),table td:nth-child(2),table th:nth-child(5),table td:nth-child(5),table th:nth-child(7),table td:nth-child(7),table th:nth-child(8),table td:nth-child(8){display:none}
+  #mx th:nth-child(2),#mx td:nth-child(2),#mx th:nth-child(5),#mx td:nth-child(5),#mx th:nth-child(7),#mx td:nth-child(7),#mx th:nth-child(8),#mx td:nth-child(8){display:none}
 }
 section.tier{padding:30px 0}
 section.tier h2{font-size:1.35rem}
