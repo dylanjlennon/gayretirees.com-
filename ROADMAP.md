@@ -27,10 +27,17 @@ needed (see Phase 4). `build.py` runs clean and `tests.py` is green
 - [x] **[CLAUDE]** Real phone number sitewide (828-412-0678)
 - [x] **[CLAUDE]** Delete EXAMPLE agent rows (jane-sample, mark-sample)
 - [x] **[CLAUDE]** Asheville one_liner differentiated from GayAsheville.com
-- [ ] **[DYLAN]** Confirm: is `dylan@gayretirees.com` a live mailbox yet, or
-      should the site show a different working email for now?
-- [ ] **[DYLAN]** Dylan's NC real estate license number (`agents.csv`,
-      currently `NC-REPLACE`) — this is a legal identifier, I won't guess it.
+- [x] **License number confirmed 2026-09-23:** `NC323192` — live in `agents.csv`.
+- [x] **Brokerage corrected 2026-09-23:** Dylan is with Unique: A Real Estate
+      Collective, not Revel Real Estate (old placeholder) — live everywhere
+      it renders, including the RealEstateAgent JSON-LD on the agent page.
+- [~] **Email in progress (2026-09-23):** `dylan@gayretirees.com` was not a
+      live mailbox (confirmed via DNS — no MX records existed). Cloudflare
+      Email Routing is now set up: MX/TXT records added and locked, one
+      routing rule (`dylan@gayretirees.com` → `dylanjlennon@gmail.com`) is
+      Active. Waiting on Dylan to send a real test email and confirm it
+      lands before flipping the `email` field in `agents.csv` off the
+      placeholder.
 - [x] Tier-1 verification pass — done 2026-08-30 for all 23 states + 23
       cities. 14 cities published with a real sourced price (`price_src`);
       9 (wilton-manors, st-pete, sarasota, key-west, savannah, rehoboth,
@@ -62,8 +69,10 @@ needed (see Phase 4). `build.py` runs clean and `tests.py` is green
       a test lead through the live site and confirming the email lands —
       not done yet, since submitting a form is a discrete action worth your
       go-ahead rather than assuming.
-- [ ] **[DYLAN]** Once `dylan@gayretirees.com` is a live mailbox (see Phase 1),
-      switch the notification email from the Gmail fallback to that address.
+- [ ] **[DYLAN]** Once the test email in Phase 1 confirms delivery, decide
+      whether to switch Netlify Forms notifications from the Gmail fallback
+      to `dylan@gayretirees.com` — since that address now just forwards to
+      the same Gmail inbox, this is optional, not blocking.
 
 ## Phase 4 — Get paid (blocks agent tiers being real products)
 
@@ -99,14 +108,97 @@ needed (see Phase 4). `build.py` runs clean and `tests.py` is green
 
 - [x] Agent signup flow exists (`agent-signup.html` → `agent-profile.html`).
       Approved agents are still added to `agents.csv` by hand.
-- [ ] Agent pricing is inconsistent between `AGENT-OUTREACH.md` and this file —
-      resolve in PRD 0003 (see `tasks/research-gayrealestate-com-2026-09-20.md`).
+- [x] Agent pricing inconsistency resolved 2026-09-23 — see Phase 4.
 - [x] City `editorial_note` (renamed from `dylan_note`) may be drafted by Claude
       per `VOICE.md`; agent `blurb`/`testimonial` stay human-only.
 
+## Phase 6 — Finish the data foundation
+
+- [ ] **[CLAUDE, blocked on a working Redfin/Zillow pull]** 3 cities stuck in
+      `draft` (`orlando`, `portland-me`, `charleston`) — same automated-fetch
+      blocking that held up 9 cities before. Each is dead SEO weight as a
+      draft page; needs a manual price pull per city to flip to `published`.
+- [ ] **[CLAUDE]** Freshness pass: `tests.py` currently WARNs on 5
+      political rows past 180 days (austin, charleston, raleigh-durham,
+      rehoboth, savannah) and 10 cities' newest news item past 90 days
+      (albuquerque, austin, charleston, eureka-springs, orlando, phoenix,
+      portland, sarasota, saugatuck, st-pete). Not broken, but worth a
+      recurring re-check so "as of" dates don't quietly go stale.
+- [ ] **[CLAUDE, needs source research]** `PERSONA.md` names two real gaps in
+      the buyer-archetype data that's otherwise fully sourced-and-dated
+      everywhere else on the site: no "family-adjacent" axis (flight access
+      to kids/chosen family) and no trans-specific healthcare-access rating
+      (only `hiv_care` exists today). Both fit the site's existing
+      sourced-CSV-column pattern and would differentiate from every generic
+      retirement site — this is exactly the kind of depth GayRealEstate.com
+      doesn't have (see the research note's "gaps we can win on").
+
+## Phase 7 — Turn the lookup tool into a matching experience
+
+- [ ] **[CLAUDE, needs Dylan's sign-off on scope]** A short multi-question
+      wizard (budget range → non-negotiable protections → climate
+      tolerance → walkability) that outputs a ranked 2-3 city shortlist and
+      captures an email *in exchange for the shortlist* — this fixes the
+      newsletter form's current "asks for an email, gives nothing back"
+      problem, which `PERSONA.md` itself flags as a trust-breaker. Feeds the
+      connect.html form with pre-filled context, shortening the funnel.
+- [ ] **[CLAUDE]** An affordability calculator using data already in the
+      CSVs (state income tax, SS exemption, property price): "moving from
+      [your state] to Asheville saves ~$X/year in state tax on a $60K
+      retirement income." A concrete personal number is stickier than a
+      static comparison table.
+
+## Phase 8 — Trust, legal, and roster diversity
+
+- [ ] **[DYLAN]** Confirm with your broker-in-charge (Phase 4) — this is the
+      same legal check, listed here too since it blocks recruiting agent #2.
+- [ ] **[DYLAN]** `PERSONA.md`'s own open question: current agent roster and
+      testimonial copy skews toward gay men. Worth addressing directly as
+      you recruit agents 2+, both in who you approach and in a copy review
+      so the site reads as welcoming across the LGBTQ+ spectrum, not just
+      to the demographic of the one agent listed so far.
+
+## Phase 9 — Analytics-driven growth loop
+
+- [ ] **[DYLAN]** Read GA4 and share numbers, or grant API access (this is
+      also Phase 5's blocking ask — repeated here because everything below
+      depends on it).
+- [ ] **[CLAUDE, once GA4 access exists]** Set up conversion funnels (vibe
+      card → city page → connect form) to see actual drop-off points
+      instead of guessing.
+- [ ] **[CLAUDE, once GA4 access exists]** Use `data-ga` event data (already
+      instrumented sitewide) to see which vibe cards/filters get used most —
+      that's the signal for which of the 3 draft cities, or which new city
+      entirely, to prioritize sourcing next.
+- [ ] **[DYLAN+CLAUDE]** Once there's real traffic data, recruit agents 2
+      through ~5 using actual per-city numbers as the pitch, per
+      `AGENT-OUTREACH.md`.
+
+## Phase 10 — Technical hardening
+
+- [x] **Regression test added 2026-09-23** (`tests.py`): asserts the mobile
+      column-hiding CSS rule stays scoped to `#mx` and never regresses to a
+      bare `table` selector — this is the exact bug fixed earlier today
+      (it had silently hidden the governor/mayor name on every city's
+      political-climate table, three columns on states.html, and an entire
+      city's data on every compare/*.html page, on any screen under 760px).
+- [ ] **[CLAUDE]** A basic Lighthouse/accessibility pass now that the site
+      has real traffic potential — check color contrast, ARIA labeling on
+      the vibe-card filters, and keyboard navigation, per `PERSONA.md`'s
+      "click targets sized generously" and "150-200% zoom" requirements.
+
+## Phase 11 — SEO & content moat
+
+- [ ] **[CLAUDE]** Once Phase 6's 3 draft cities publish, expand comparison
+      page coverage (`compare/*.html`) to include them — each comparison
+      page is its own indexable long-tail search result.
+- [ ] **[DYLAN]** Backlinks from LGBTQ+ aging/retirement orgs (SAGE, HRC,
+      local Pride organizations already cited as sources on city pages) —
+      worth reaching out once there's a second published agent to point to
+      as proof the directory is real, not a one-person side project.
+
 ---
 
-**Immediate ask:** two answers to unblock Phase 1 (email status, license
-number); a decision on the remaining 9 unpriced cities; and whether to
-submit a test lead through the live form to confirm the notification
-email actually lands.
+**Immediate ask:** send a test email to `dylan@gayretirees.com` to confirm
+the new Cloudflare routing works (Phase 1); read/share GA4 numbers (Phases
+5 and 9); and a decision on the remaining 3 unpriced draft cities (Phase 6).

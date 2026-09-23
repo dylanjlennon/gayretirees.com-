@@ -43,6 +43,10 @@ actual = [os.path.relpath(os.path.join(dp,f),DIST) for dp,_,fs in os.walk(DIST) 
 orphans = sorted(set(actual) - set(expected))
 check("build: no stale/orphan files left over in dist (removed CSV rows must vanish on rebuild)", not orphans, str(orphans))
 
+css = open(os.path.join(DIST, "style.css")).read()
+check("css: mobile column-hiding is scoped to #mx, not every table (regression guard — this rule silently hid the 'who holds it' column on political tables, whole state-law columns on states.html, and an entire city's data on compare pages, 2026-09-23)",
+      "table th:nth-child(2)" not in css and "table td:nth-child(2)" not in css and "#mx th:nth-child(2)" in css)
+
 # ---------- 3. HTML validity + link graph ----------
 class P(HTMLParser):
     def __init__(s):
