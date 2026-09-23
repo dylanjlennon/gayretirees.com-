@@ -16,7 +16,8 @@ dylanjlennon@gmail.com on submission. All 23 cities are `status=published`
 (prices re-verified 2026-09-20 against Redfin/Zillow, with each row's
 measure recorded in `price_metric`). Real GA4 property is live
 (`G-HMVXKSHKN9`). Agent signup + profile forms exist. One real agent (Dylan,
-Asheville); no Stripe yet. `build.py` runs clean and `tests.py` is green
+Asheville, Unique: A Real Estate Collective); referral-fee model, no Stripe
+needed (see Phase 4). `build.py` runs clean and `tests.py` is green
 (114 checks). PRD 0001 (living city guide) is built and committed locally: sourced climate/airports/districts/ordinances, political climate, places/events/news, What-changed feed, 21 comparison pages. Pending: push to production, weekly rebuild hook, GA4 baseline, and a second sourcing pass on remaining VERIFY fields. Next PRDs: 0002 local agent voices, 0003 agent recruitment, 0004 measurement.
 
 ---
@@ -66,12 +67,24 @@ Asheville); no Stripe yet. `build.py` runs clean and `tests.py` is green
 
 ## Phase 4 — Get paid (blocks agent tiers being real products)
 
-- [ ] **[DYLAN]** Stripe account + bank details (identity/banking — has to
-      be you).
-- [ ] **[DYLAN]** or **[CLAUDE+BROWSER]** Stripe Payment Links for the
-      $29/$79/$149/$249 tiers + $19 founding rate, once the account exists.
-- [ ] **[CLAUDE]** Wire the payment links into the agent-tier pages once
-      they exist.
+- [x] **Decision (2026-09-23):** pricing reconciled — the old $29/$79/$149/$249
+      + $19-founding tier ladder here conflicted with AGENT-OUTREACH.md's
+      actual pitch and was never implemented. Going with the simpler,
+      already-tested model from AGENT-OUTREACH.md, informed by
+      `tasks/research-gayrealestate-com-2026-09-20.md`'s competitive read:
+      **free to list, 25% referral fee paid at closing, no subscription.**
+      That undercuts GayRealEstate.com's free-tier rate (35%) and needs no
+      payment processor — referral fees are paid broker-to-broker at
+      closing, same as any other real estate referral.
+- [x] No Stripe needed for this model — removed from the blocking path.
+      Revisit only if/when a paid exclusive-city tier gets added later,
+      once real per-city lead volume justifies asking agents for money
+      up front (see the research note's option D).
+- [ ] **[DYLAN]** Legal check (not legal advice, just a flag): confirm with
+      your broker-in-charge at Unique: A Real Estate Collective that
+      referral fees paid to you as the site operator, including across
+      state lines, are fine under RESPA and state license law before any
+      agent is actually charged one.
 
 ## Phase 5 — Know what's working
 

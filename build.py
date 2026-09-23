@@ -781,11 +781,8 @@ profile_body = f"""<div class="hero"><div class="wrap"><div class="kicker">For a
 </div>
 <script>(function(){{var q=new URLSearchParams(location.search);var n=q.get("name"),em=q.get("email");if(n)document.getElementById("pn").value=n;if(em)document.getElementById("pe").value=em;}})();</script>
 <label for="pb">Short bio for your city</label><textarea id="pb" name="bio" rows="4" placeholder="A couple sentences on your background and why you work with LGBTQ+ clients well." required></textarea>
-<fieldset><legend>How do you want to be listed?</legend>
-<label class="mk"><input type="radio" name="pricing_plan" value="standard-25" required>Standard listing — 25% referral fee when a deal closes, no monthly cost</label><br>
-<label class="mk"><input type="radio" name="pricing_plan" value="top-15" required>Top agent for my city — $29/month, 15% referral fee, exclusive (one agent per market)</label>
-</fieldset>
-<p style="font-size:.8rem;color:var(--mut);margin-top:12px">Choosing "Top agent" doesn't charge you here — we'll follow up with a payment link. Referrals are made broker-to-broker and disclosed in writing.</p>
+<input type="hidden" name="pricing_plan" value="standard-25">
+<p style="font-size:.9rem;margin-top:12px"><strong>How it works:</strong> free to list, 25% referral fee when a deal closes, no monthly cost, cancel anytime. Referrals are made broker-to-broker and disclosed in writing.</p>
 <button class="cta" type="submit">Submit</button>
 </form></div>"""
 

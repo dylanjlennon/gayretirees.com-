@@ -62,7 +62,10 @@ In order:
       now published; every price was re-verified 2026-09-20 and labeled by
       measure (`price_metric`: Redfin median sale price vs Zillow typical
       home value). `dylan_note` is now `editorial_note` (see VOICE.md).
-- [ ] Stripe Payment Links for $29/$79/$149/$249 tiers + $19 founding rate
+- [x] Pricing reconciled 2026-09-23 — dropped the $29/$79/$149/$249 + $19
+      founding-rate ladder (never implemented, conflicted with the live
+      outreach template). Current model: free to list, 25% referral fee at
+      closing, no subscription, no Stripe needed. See ROADMAP.md Phase 4.
 - [x] Analytics plumbing done: GA4 snippet on every page (build.py `GA_SNIPPET`),
       plus a shared `analytics.js` that fires GA4 events for every form
       submission (`data-ga-form`, sent via beacon so it survives the redirect

@@ -22,9 +22,9 @@ the markets we cover but don't yet have a partner agent for.
 Quick version of how it works:
 - Every lead comes through me first — I make a warm introduction, so you're never bidding
   against other agents for the same buyer.
-- Two ways to be listed: a standard listing (25% referral fee when a deal closes, no monthly
-  cost), or exclusive "top agent for [CITY]" (one agent per market, $29/month + 15% referral
-  fee).
+- Free to list: 25% referral fee when a deal closes, no monthly cost, no subscription, cancel
+  anytime. That undercuts GayRealEstate.com's free-tier referral rate (35%) and keeps things
+  simple while the directory is still proving itself.
 - Every partner's license gets verified before they go live, and that's disclosed on the
   page — sponsored placement, clearly labeled, same as mine.
 
@@ -51,9 +51,9 @@ questions first.
 - Fill in [CITY] with the specific market — copy is written narrow on purpose (this city is
   open) rather than "join our platform," since one open city is a real, credible ask and
   "join our platform" overstates what exists today.
-- Don't send the exclusive/$29 pricing as a hard sell in the cold email — it's there for
-  agents who ask "what are my options," not as the headline. The standard (free, 25%) tier is
-  the low-friction default.
+- Pricing is deliberately one option right now: free to list, 25% referral fee at closing.
+  No subscription tier for now (2026-09-23 decision) — add a paid exclusive-city tier later,
+  once there's real per-city lead volume to justify asking for money up front.
 - Once someone applies and their license clears, send them their personalized step-2 link:
   `agent-profile.html?name=THEIR+NAME&email=their@email.com` — it prefills the form so they
   don't have to retype anything, and matches their step-1 submission by name/email so you can
